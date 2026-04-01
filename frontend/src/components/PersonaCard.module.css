@@ -1,0 +1,98 @@
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  box-shadow: var(--shadow);
+  animation: fadeUp 0.4s ease;
+}
+.header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+.emoji {
+  font-size: 42px;
+  line-height: 1;
+  filter: drop-shadow(0 0 12px var(--accent-glow));
+}
+.archetype {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--text);
+  letter-spacing: -0.3px;
+}
+.voice {
+  font-size: 13px;
+  color: var(--accent2);
+  font-family: var(--font-mono);
+}
+.message {
+  background: var(--surface2);
+  border-left: 3px solid var(--accent);
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+  padding: 14px 18px;
+}
+.messageLabel {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--text-muted);
+  display: block;
+  margin-bottom: 6px;
+}
+.messageText {
+  font-size: 15px;
+  color: var(--text);
+  font-style: italic;
+  line-height: 1.5;
+}
+.grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+.chip {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 10px 14px;
+}
+.chipLabel {
+  display: block;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--text-muted);
+  margin-bottom: 3px;
+}
+.chipValue {
+  font-size: 13px;
+  color: var(--text);
+  font-weight: 500;
+}
+.conflicts { display: flex; flex-direction: column; gap: 8px; }
+.conflictsLabel {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--text-muted);
+}
+.tags { display: flex; flex-wrap: wrap; gap: 6px; }
+.tag {
+  background: var(--accent-glow);
+  border: 1px solid var(--accent);
+  color: var(--accent2);
+  border-radius: 20px;
+  padding: 3px 10px;
+  font-size: 11px;
+  font-family: var(--font-mono);
+}
+.traitTag {
+  background: rgba(245,158,11,0.1);
+  border-color: var(--gold);
+  color: var(--gold);
+}
