@@ -1,3 +1,4 @@
+/** @deprecated — replaced by Cockpit.jsx in v2. Do not route here. */
 /**
  * Questionnaire.jsx
  * Progressive, confrontational identity discovery.

@@ -1,3 +1,4 @@
+/** @deprecated — replaced by CockpitPreview.jsx in v2. Do not route here. */
 /**
  * PersonaReview.jsx
  * Sends answers to /api/analyze, displays persona + structure, then proceeds to generation.
