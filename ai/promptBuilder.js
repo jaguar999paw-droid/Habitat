@@ -1,3 +1,5 @@
+const { getTensionWeight } = require('../engine/temporalParser');
+
 /**
  * promptBuilder.js
  * 
@@ -49,6 +51,9 @@ function buildSectionPrompt(section, persona, message, style, previousSections =
     contextBlock += '\n--- END OF PREVIOUS SECTIONS ---';
   }
 
+  // Inject temporal context if available
+  const temporalBlock = buildTemporalBlock(section, message)
+
   const userPrompt = `
 SONG BRIEF
 ----------
@@ -74,12 +79,13 @@ Devices:      ${style.lyricalDevices.join(', ')}
 
 SECTION TO WRITE
 ----------------
-Type:         ${section.type.toUpperCase()}
-Goal:         ${section.goal} — ${section.description}
-Line Count:   approximately ${section.lines} lines
-Hook Style:   ${section.type === 'hook' ? style.hookStyle : 'N/A'}
-Bridge Style: ${section.type === 'bridge' ? style.bridgeStyle : 'N/A'}
-${contextBlock}
+Type:            ${section.type.toUpperCase()}
+Goal:            ${section.goal} — ${section.description}
+Line Count:      approximately ${section.lines} lines
+Hook Style:      ${section.type === 'hook' ? style.hookStyle : 'N/A'}
+Bridge Style:    ${section.type === 'bridge' ? style.bridgeStyle : 'N/A'}
+Tension Weight:  ${Math.round(getTensionWeight(section.type) * 100)}% — this section is ${getTensionWeight(section.type) >= 0.8 ? 'HIGH-TENSION: lean into contradiction, do not resolve it' : getTensionWeight(section.type) >= 0.6 ? 'MID-TENSION: explore, not declare' : 'LOW-TENSION: establish and ground'}
+${temporalBlock}${contextBlock}
 
 Now write ONLY this ${section.type.toUpperCase()} section. Output lyrics only. No labels, no commentary.
 `.trim();
@@ -94,6 +100,9 @@ function buildFullSongPrompt(structure, persona, message, style) {
   const sectionList = structure.sections.map(s =>
     `Section ${s.index}: ${s.type.toUpperCase()} — Goal: ${s.goal}`
   ).join('\n');
+
+  // Inject temporal context if available
+  const temporalBlock = buildTemporalBlock(section, message)
 
   const userPrompt = `
 SONG BRIEF
@@ -120,6 +129,61 @@ Lyrics only — no explanations.
 `.trim();
 
   return { systemPrompt: SYSTEM_PROMPT, userPrompt };
+}
+
+
+/**
+ * Build a temporal context block to inject into the AI prompt.
+ * Only included if temporal data is available on the message object.
+ */
+function buildTemporalBlock(section, message) {
+  const tp = message.temporalProfile
+  if (!tp) return ''
+
+  const lines = ['\n--- TEMPORAL IDENTITY CONTEXT ---']
+
+  // Tell the AI which time layer this section should draw from
+  if (section.type === 'verse' && section.goal === 'recall_origin') {
+    lines.push('TEMPORAL LAYER FOR THIS SECTION: PAST')
+    lines.push('Draw from who the speaker WAS — formative moments, old wounds, earlier version of self.')
+  } else if (section.type === 'hook' || section.type === 'pre-hook') {
+    lines.push('TEMPORAL LAYER FOR THIS SECTION: PRESENT')
+    lines.push('This is the NOW. The unresolved contradiction. The thing that cannot be unsaid.')
+  } else if (section.type === 'bridge') {
+    const hasFuture = tp.temporal?.counts?.future > 0
+    lines.push(`TEMPORAL LAYER FOR THIS SECTION: ${hasFuture ? 'FUTURE' : 'PRESENT → FUTURE'}`)
+    lines.push('The bridge is where transformation lives. Show the shift — who they are becoming.')
+  } else if (section.type === 'outro') {
+    lines.push('TEMPORAL LAYER FOR THIS SECTION: FUTURE PROJECTION')
+    lines.push('Leave the listener with the projected self — desired or feared. Open-ended.')
+  }
+
+  // Logical relation instruction
+  if (tp.logicalRelation) {
+    const rel = tp.logicalRelation.relation
+    if (rel === 'CONTRADICTION') {
+      lines.push(`LOGICAL RELATION: CONTRADICTION (${Math.round(tp.logicalRelation.confidence * 100)}% confidence)`)
+      lines.push('The speaker's identity contains a direct contradiction. Do NOT resolve it. Hold both truths simultaneously.')
+    } else if (rel === 'CONTRARY') {
+      lines.push('LOGICAL RELATION: CONTRARY — two states that cannot both be true.')
+      lines.push('The speaker is caught between two poles with no middle ground yet found. Write into the gap.')
+    } else if (rel === 'SUBCONTRARY') {
+      lines.push('LOGICAL RELATION: SUBCONTRARY — both things are true at once. This is the complexity.')
+      lines.push('Do NOT simplify. Allow the paradox to breathe. Both truths belong here.')
+    }
+  }
+
+  // Conflict score
+  if (tp.conflictScore != null) {
+    const intensity = tp.conflictScore >= 0.7 ? 'EXTREME' : tp.conflictScore >= 0.4 ? 'HIGH' : 'MODERATE'
+    lines.push(`CONFLICT INTENSITY: ${intensity} (${Math.round(tp.conflictScore * 100)}/100)`)
+    if (tp.conflictScore >= 0.7) {
+      lines.push('Identity conflict is extreme. The language should reflect this — raw, compressed, urgent.')
+    }
+  }
+
+  lines.push('--- END TEMPORAL CONTEXT ---')
+  return lines.join('\n') + '\n'
 }
 
 module.exports = { buildSectionPrompt, buildFullSongPrompt, SYSTEM_PROMPT };
