@@ -1,27 +1,42 @@
 /**
- * Generator.jsx
- * Real-time section-by-section song generation with live progress.
- * Calls /api/section for each section sequentially, updating UI as each arrives.
+ * Generator.jsx — v2.1
+ * Real-time section-by-section generation with:
+ * - v2 green/magenta color palette
+ * - Animated waveform composing indicator
+ * - Section lyrics appear with sectionPop animation
+ * - Progress bar with green glow
  */
 import { useState, useEffect, useRef } from 'react'
 import styles from './Generator.module.css'
 
 const SECTION_COLORS = {
-  verse: '#7c3aed', hook: '#f59e0b', 'pre-hook': '#f97316',
-  bridge: '#10b981', intro: '#6b7280', outro: '#3b82f6',
+  verse:              'var(--green-dim)',
+  hook:               'var(--magenta)',
+  'pre-hook':         'var(--warning)',
+  bridge:             'var(--green)',
+  intro:              'var(--grey-mid)',
+  outro:              'var(--text-dim)',
+  'spoken-word':      'var(--magenta-dim)',
+  'call-and-response':'var(--green)',
 }
 
 export default function Generator({ analysis, apiKey, provider, onDone }) {
   const { persona, message, structure, style } = analysis
-  const [sections,      setSections]      = useState([])
-  const [currentIdx,    setCurrentIdx]    = useState(0)
-  const [status,        setStatus]        = useState('starting')
-  const [error,         setError]         = useState(null)
+  const [sections,   setSections]   = useState([])
+  const [currentIdx, setCurrentIdx] = useState(0)
+  const [status,     setStatus]     = useState('starting')
+  const [error,      setError]      = useState(null)
   const previousRef = useRef([])
+  const streamRef   = useRef(null)
 
+  useEffect(() => { generateAll() }, [])
+
+  // Auto-scroll to bottom as lyrics appear
   useEffect(() => {
-    generateAll()
-  }, [])
+    if (streamRef.current) {
+      streamRef.current.scrollTop = streamRef.current.scrollHeight
+    }
+  }, [sections])
 
   async function generateAll() {
     setStatus('generating')
@@ -38,8 +53,7 @@ export default function Generator({ analysis, apiKey, provider, onDone }) {
             section:          allSections[i],
             persona, message, style,
             previousSections: previousRef.current,
-            apiKey,
-            provider,
+            apiKey, provider,
           }),
         })
         if (!res.ok) {
@@ -69,32 +83,47 @@ export default function Generator({ analysis, apiKey, provider, onDone }) {
           structure:   structure.conflictType,
         },
       })
-    }, 1200)
+    }, 1400)
   }
 
   const total    = structure.sections.length
   const progress = status === 'done' ? 100 : Math.round((sections.length / total) * 100)
+  const curSection = structure.sections[currentIdx]
 
   return (
     <div className={styles.page}>
       <div className={styles.content}>
+
+        {/* Header */}
         <div className={styles.header}>
           <div className={styles.statusDot} data-status={status} />
-          <div>
+          <div className={styles.headerText}>
             <h2 className={styles.title}>
-              {status === 'done' ? 'Song Complete ✓' : 'Composing Your Song…'}
+              {status === 'done' ? 'SONG COMPLETE ✓' : 'COMPOSING…'}
             </h2>
             <p className={styles.subtitle}>
               {status === 'done'
-                ? `${total} sections generated`
-                : `Writing section ${Math.min(currentIdx + 1, total)} of ${total} — ${structure.sections[currentIdx]?.type}`}
+                ? `${total} sections excavated`
+                : `Section ${Math.min(currentIdx + 1, total)} of ${total} — ${curSection?.type?.toUpperCase()}`}
             </p>
           </div>
+
+          {/* Waveform composing animation */}
+          {status === 'generating' && (
+            <div className={styles.waveform} aria-hidden="true">
+              {Array.from({ length: 7 }).map((_, i) => (
+                <span key={i} className={styles.waveBar}
+                  style={{ animationName: `wave${(i % 5) + 1}`, animationDelay: `${i * 0.1}s` }}
+                />
+              ))}
+            </div>
+          )}
         </div>
 
         {/* Progress bar */}
         <div className={styles.progressTrack}>
           <div className={styles.progressFill} style={{ width: `${progress}%` }} />
+          <span className={styles.progressPct}>{progress}%</span>
         </div>
 
         {/* Section pills */}
@@ -104,10 +133,10 @@ export default function Generator({ analysis, apiKey, provider, onDone }) {
               key={i}
               className={[
                 styles.pill,
-                i < sections.length  ? styles.pillDone    : '',
+                i < sections.length ? styles.pillDone : '',
                 i === currentIdx && status === 'generating' ? styles.pillActive : '',
               ].join(' ')}
-              style={{ '--c': SECTION_COLORS[s.type] || '#7c3aed' }}
+              style={{ '--c': SECTION_COLORS[s.type] || 'var(--green)' }}
             >
               {s.type}
             </div>
@@ -115,12 +144,22 @@ export default function Generator({ analysis, apiKey, provider, onDone }) {
         </div>
 
         {/* Live lyrics stream */}
-        <div className={styles.lyricsStream}>
+        <div className={styles.lyricsStream} ref={streamRef}>
           {sections.map((section, i) => (
-            <div key={i} className={styles.sectionBlock}>
-              <div className={styles.sectionLabel}
-                style={{ color: SECTION_COLORS[section.type] || '#7c3aed' }}>
-                ▸ {section.type.toUpperCase()}
+            <div
+              key={i}
+              className={styles.sectionBlock}
+              style={{ animationDelay: `${i * 0.05}s` }}
+            >
+              <div
+                className={styles.sectionLabel}
+                style={{ '--c': SECTION_COLORS[section.type] || 'var(--green)' }}
+              >
+                <span className={styles.sectionDot} />
+                {section.type.toUpperCase()}
+                <span className={styles.sectionGoalTag}>
+                  {section.goal?.replace(/_/g, ' ')}
+                </span>
               </div>
               <pre className={styles.lyrics}>{section.lyrics}</pre>
             </div>
@@ -128,9 +167,21 @@ export default function Generator({ analysis, apiKey, provider, onDone }) {
 
           {status === 'generating' && (
             <div className={styles.writingIndicator}>
-              <span className={styles.writingDot} />
-              <span className={styles.writingDot} />
-              <span className={styles.writingDot} />
+              <div className={styles.writingBars}>
+                {Array.from({ length: 5 }).map((_, i) => (
+                  <span key={i} className={styles.writingBar}
+                    style={{ animationName: `wave${(i % 5) + 1}`, animationDelay: `${i * 0.12}s` }}
+                  />
+                ))}
+              </div>
+              <span className={styles.writingText}>writing {curSection?.type}…</span>
+            </div>
+          )}
+
+          {sections.length === 0 && status === 'generating' && (
+            <div className={styles.startingMsg}>
+              <div className={styles.startingDot} />
+              <span>Engine initializing…</span>
             </div>
           )}
         </div>
@@ -138,7 +189,9 @@ export default function Generator({ analysis, apiKey, provider, onDone }) {
         {error && (
           <div className={styles.error}>
             <strong>Generation failed:</strong> {error}
-            <p className={styles.errorHint}>Check your API key and that the backend server is running.</p>
+            <p className={styles.errorHint}>
+              Verify your API key and that the backend is running on port 3001.
+            </p>
           </div>
         )}
       </div>

@@ -1,35 +1,32 @@
-/* ── SCI Global Styles v2 ─────────────────────────────────────────────────── */
-/* Theme: Electric Green + Hot Magenta + B&W — cockpit / instrument panel     */
+/* ── SCI Global Styles v2.1 ──────────────────────────────────────────────── */
+/* Theme: Electric Green + Hot Magenta + Deep Black — cockpit instrument art  */
 
-@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Space+Grotesk:wght@300;400;500;600;700&family=Space+Mono:wght@400;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Space+Grotesk:wght@300;400;500;600;700&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap');
 
 :root {
-  /* Backgrounds — deep blacks */
   --bg:           #040407;
   --surface:      #0c0c10;
   --surface2:     #141418;
   --surface3:     #1c1c22;
+  --surface4:     #242430;
 
-  /* Primary accent — electric green */
   --green:        #00ff88;
   --green-dim:    #00cc6a;
   --green-deep:   #004d29;
-  --green-glow:   rgba(0, 255, 136, 0.15);
+  --green-glow:   rgba(0,255,136,0.15);
+  --green-glow2:  rgba(0,255,136,0.06);
 
-  /* Secondary accent — hot magenta */
   --magenta:      #ff00aa;
   --magenta-dim:  #cc0088;
   --magenta-deep: #4d0033;
-  --magenta-glow: rgba(255, 0, 170, 0.15);
+  --magenta-glow: rgba(255,0,170,0.15);
 
-  /* Neutral — whites and greys */
   --white:        #f5f5f5;
   --grey-light:   #a0a0a8;
   --grey-mid:     #505058;
-  --grey-dark:    #282830;
-  --border:       #242430;
+  --grey-dark:    #242430;
+  --border:       #1e1e28;
 
-  /* Semantic */
   --text:         #f0f0f4;
   --text-muted:   #606068;
   --text-dim:     #909098;
@@ -37,26 +34,25 @@
   --error:        #ff3355;
   --warning:      #ffaa00;
 
-  /* Legacy compat (some components may still reference these) */
+  /* Legacy compat */
   --accent:       var(--green);
   --accent2:      var(--magenta);
   --accent-glow:  var(--green-glow);
   --gold:         var(--warning);
 
-  /* Typography */
   --font-sans:    'Space Grotesk', sans-serif;
   --font-mono:    'Space Mono', monospace;
   --font-display: 'Bebas Neue', sans-serif;
 
-  /* Layout */
   --radius:    6px;
   --radius-sm: 3px;
+  --radius-lg: 12px;
   --shadow:    0 4px 24px rgba(0,0,0,0.6);
   --shadow-lg: 0 8px 48px rgba(0,0,0,0.8);
+  --shadow-green: 0 0 30px rgba(0,255,136,0.12);
 }
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
 html { scroll-behavior: smooth; }
 
 body {
@@ -66,68 +62,152 @@ body {
   line-height:      1.6;
   min-height:       100vh;
   -webkit-font-smoothing: antialiased;
-  /* CRT scanline texture — analogue warmth */
+  /* CRT scanline texture */
   background-image: repeating-linear-gradient(
     0deg,
     transparent,
     transparent 1px,
-    rgba(0,0,0,0.02) 1px,
-    rgba(0,0,0,0.02) 2px
+    rgba(0,0,0,0.025) 1px,
+    rgba(0,0,0,0.025) 2px
   );
 }
 
-/* Scrollbar */
-::-webkit-scrollbar { width: 4px; }
+/* ── Noise grain overlay (art texture) ────────────────────────────────────── */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  pointer-events: none;
+  opacity: 0.022;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+  background-size: 200px 200px;
+}
+
+/* ── Scrollbar ──────────────────────────────────────────────────────────────── */
+::-webkit-scrollbar { width: 4px; height: 4px; }
 ::-webkit-scrollbar-track { background: var(--bg); }
 ::-webkit-scrollbar-thumb { background: var(--grey-dark); border-radius: 2px; }
 ::-webkit-scrollbar-thumb:hover { background: var(--green-dim); }
 
-/* Selection */
+/* ── Selection ──────────────────────────────────────────────────────────────── */
 ::selection { background: var(--green); color: #000; }
 
-/* Focus — green instrument glow */
+/* ── Focus ──────────────────────────────────────────────────────────────────── */
 :focus-visible {
   outline: none;
-  box-shadow: 0 0 0 2px var(--green), 0 0 16px var(--green-glow);
+  box-shadow: 0 0 0 2px var(--green), 0 0 20px var(--green-glow);
 }
-
-/* Input glow on focus */
 input:focus, textarea:focus, select:focus {
   outline: none;
-  box-shadow: 0 0 0 2px var(--green), 0 0 16px var(--green-glow);
+  box-shadow: 0 0 0 1px var(--green), 0 0 16px var(--green-glow);
 }
 
-/* Typography helpers */
+/* ── Typography helpers ─────────────────────────────────────────────────────── */
 .mono    { font-family: var(--font-mono); }
 .display { font-family: var(--font-display); letter-spacing: 2px; }
 
-/* Animations */
+/* ═══════════════════════════════════════════════════════════════════════════ */
+/*  ANIMATIONS                                                                  */
+/* ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ── Entrance ───────────────────────────────────────────────────────────────── */
 @keyframes fadeUp {
-  from { opacity: 0; transform: translateY(16px); }
+  from { opacity: 0; transform: translateY(20px); }
   to   { opacity: 1; transform: translateY(0); }
 }
 @keyframes fadeIn {
   from { opacity: 0; }
   to   { opacity: 1; }
 }
-@keyframes pulse-green {
-  0%, 100% { box-shadow: 0 0 0 0 var(--green-glow); }
-  50%       { box-shadow: 0 0 0 10px transparent; }
+@keyframes fadeDown {
+  from { opacity: 0; transform: translateY(-20px); }
+  to   { opacity: 1; transform: translateY(0); }
 }
+@keyframes scaleIn {
+  from { opacity: 0; transform: scale(0.92); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+/* ── Glow pulse ─────────────────────────────────────────────────────────────── */
+@keyframes pulseGreen {
+  0%, 100% { box-shadow: 0 0 0 0 var(--green-glow); }
+  50%       { box-shadow: 0 0 0 12px transparent; }
+}
+@keyframes glowText {
+  0%, 100% { text-shadow: 0 0 10px var(--green), 0 0 30px rgba(0,255,136,0.4); }
+  50%       { text-shadow: 0 0 20px var(--green), 0 0 60px rgba(0,255,136,0.6); }
+}
+
+/* ── Glitch ─────────────────────────────────────────────────────────────────── */
+@keyframes glitch {
+  0%   { clip-path: inset(0 0 95% 0); transform: translate(-3px, 0); }
+  10%  { clip-path: inset(10% 0 80% 0); transform: translate(3px, 0); }
+  20%  { clip-path: inset(20% 0 60% 0); transform: translate(-2px, 0); }
+  30%  { clip-path: inset(40% 0 30% 0); transform: translate(2px, 0); }
+  40%  { clip-path: inset(60% 0 10% 0); transform: translate(-3px, 0); }
+  50%  { clip-path: inset(80% 0 0% 0); transform: translate(3px, 0); }
+  60%  { clip-path: inset(0 0 85% 0); transform: translate(-1px, 0); }
+  100% { clip-path: inset(0 0 95% 0); transform: translate(0, 0); }
+}
+@keyframes glitch2 {
+  0%   { clip-path: inset(90% 0 0 0); transform: translate(3px, 0); }
+  25%  { clip-path: inset(70% 0 10% 0); transform: translate(-3px, 0); }
+  50%  { clip-path: inset(50% 0 30% 0); transform: translate(2px, 0); }
+  75%  { clip-path: inset(20% 0 60% 0); transform: translate(-2px, 0); }
+  100% { clip-path: inset(0 0 90% 0); transform: translate(0, 0); }
+}
+
+/* ── Waveform bars ──────────────────────────────────────────────────────────── */
+@keyframes wave1 { 0%,100%{height:4px}  50%{height:20px} }
+@keyframes wave2 { 0%,100%{height:8px}  50%{height:28px} }
+@keyframes wave3 { 0%,100%{height:16px} 50%{height:36px} }
+@keyframes wave4 { 0%,100%{height:6px}  50%{height:24px} }
+@keyframes wave5 { 0%,100%{height:10px} 50%{height:32px} }
+
+/* ── Typewriter cursor ──────────────────────────────────────────────────────── */
+@keyframes blink {
+  0%,100% { opacity: 1; }
+  50%      { opacity: 0; }
+}
+
+/* ── Spin / ignite ──────────────────────────────────────────────────────────── */
 @keyframes spin {
   to { transform: rotate(360deg); }
 }
 @keyframes ignite {
-  0%   { background: var(--green);   color: #000; }
-  40%  { background: var(--magenta); color: #fff; }
-  70%  { background: var(--green);   color: #000; }
-  100% { background: var(--green);   color: #000; }
-}
-@keyframes textRefresh {
-  0%   { opacity: 1; }
-  40%  { opacity: 0; }
-  100% { opacity: 1; }
+  0%   { background: var(--green);   color: #000; box-shadow: 0 0 0 0 var(--green-glow); }
+  30%  { background: var(--magenta); color: #fff; box-shadow: 0 0 40px var(--magenta-glow); }
+  70%  { background: var(--green);   color: #000; box-shadow: 0 0 20px var(--green-glow); }
+  100% { background: var(--green);   color: #000; box-shadow: 0 0 0 0 transparent; }
 }
 
-.fade-up  { animation: fadeUp  0.4s ease forwards; }
-.fade-in  { animation: fadeIn  0.3s ease forwards; }
+/* ── Floating drift (for particles) ────────────────────────────────────────── */
+@keyframes float {
+  0%,100% { transform: translateY(0) rotate(0deg); opacity: 0.08; }
+  33%      { transform: translateY(-18px) rotate(5deg); opacity: 0.14; }
+  66%      { transform: translateY(-8px) rotate(-3deg); opacity: 0.1; }
+}
+
+/* ── Shimmer scan ───────────────────────────────────────────────────────────── */
+@keyframes scanline {
+  from { transform: translateY(-100%); }
+  to   { transform: translateY(100vh); }
+}
+
+/* ── Text reveal ────────────────────────────────────────────────────────────── */
+@keyframes revealRight {
+  from { clip-path: inset(0 100% 0 0); }
+  to   { clip-path: inset(0 0% 0 0); }
+}
+
+/* ── Section entrance stagger ───────────────────────────────────────────────── */
+@keyframes sectionPop {
+  from { opacity: 0; transform: translateX(-12px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+/* Utility classes */
+.fade-up  { animation: fadeUp  0.5s ease forwards; }
+.fade-in  { animation: fadeIn  0.4s ease forwards; }
+.scale-in { animation: scaleIn 0.4s ease forwards; }

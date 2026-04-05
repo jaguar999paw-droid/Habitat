@@ -1,0 +1,42 @@
+.glitch {
+  position: relative;
+  display: inline-block;
+  cursor: default;
+}
+
+/* Base pseudo-elements — positioned exactly over the text */
+.glitch::before,
+.glitch::after {
+  content: attr(data-text);
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  pointer-events: none;
+  font: inherit;
+  letter-spacing: inherit;
+  color: inherit;
+}
+
+/* Green channel shift */
+.glitch::before {
+  color: var(--green);
+  text-shadow: -2px 0 var(--magenta);
+  left: 2px;
+}
+
+/* Magenta channel shift */
+.glitch::after {
+  color: var(--magenta);
+  text-shadow: 2px 0 var(--green);
+  left: -2px;
+}
+
+/* Triggered state */
+.active::before {
+  opacity: 0.8;
+  animation: glitch  0.35s steps(1) forwards;
+}
+.active::after {
+  opacity: 0.7;
+  animation: glitch2 0.35s steps(1) forwards;
+}

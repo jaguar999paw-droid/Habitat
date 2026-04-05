@@ -1,4 +1,4 @@
-/** KnobSlider.jsx — Rotary knob-style range input */
+/** KnobSlider.jsx — Rotary knob-style range input (fixed overlay positioning) */
 import styles from './KnobSlider.module.css'
 
 export default function KnobSlider({ label, value, onChange, min = 0, max = 100, unit = '' }) {
@@ -8,17 +8,21 @@ export default function KnobSlider({ label, value, onChange, min = 0, max = 100,
 
   return (
     <div className={styles.knob}>
-      <div className={styles.dial} style={{ '--deg': `${deg}deg` }}>
-        <div className={styles.marker} />
+      {/* Dial wrapper — positions visual + input together */}
+      <div className={styles.dialWrapper}>
+        <div className={styles.dial} style={{ '--deg': `${deg}deg` }}>
+          <div className={styles.marker} />
+        </div>
+        <input
+          type="range"
+          min={min}
+          max={max}
+          value={value}
+          onChange={e => onChange(Number(e.target.value))}
+          className={styles.slider}
+          aria-label={label}
+        />
       </div>
-      <input
-        type="range"
-        min={min}
-        max={max}
-        value={value}
-        onChange={e => onChange(Number(e.target.value))}
-        className={styles.slider}
-      />
       <div className={styles.readout}>
         <span className={styles.val}>{value}{unit}</span>
         <span className={styles.lbl}>{label}</span>

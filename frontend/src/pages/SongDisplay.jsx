@@ -1,44 +1,45 @@
 /**
- * SongDisplay.jsx — v2
- * Final song display with per-section regenerate (↺) button.
- * Theme: green + magenta + B&W.
- *
- * @deprecated Questionnaire.jsx and PersonaReview.jsx are kept in /pages
- * but are no longer routed to — Cockpit.jsx replaces them.
+ * SongDisplay.jsx — v2.1
+ * Final song with:
+ * - CRT-glow archetype name (Bebas Neue + green text-shadow + glitch on hover)
+ * - Temporal conflict score badge (from PIRE layer)
+ * - Section cards with left accent border matching section color
+ * - Regen button with rotation animation
+ * - Staggered section entrance
  */
 import { useState } from 'react'
+import GlitchText from '../components/GlitchText'
 import styles from './SongDisplay.module.css'
 
 const SECTION_COLORS = {
-  verse:             'var(--green-dim)',
-  hook:              'var(--magenta)',
-  'pre-hook':        'var(--warning)',
-  bridge:            'var(--green)',
-  intro:             'var(--grey-mid)',
-  outro:             'var(--text-dim)',
-  'spoken-word':     'var(--magenta-dim)',
+  verse:              'var(--green-dim)',
+  hook:               'var(--magenta)',
+  'pre-hook':         'var(--warning)',
+  bridge:             'var(--green)',
+  intro:              'var(--grey-mid)',
+  outro:              'var(--text-dim)',
+  'spoken-word':      'var(--magenta-dim)',
   'call-and-response':'var(--green)',
 }
 
 export default function SongDisplay({ song, analysis, onRestart }) {
-  const [copied,      setCopied]      = useState(false)
-  const [view,        setView]        = useState('sections')
-  const [sections,    setSections]    = useState(song.sections)
-  const [regenerating,setRegenerating]= useState({}) // { [index]: true }
-  const [seedMap,     setSeedMap]     = useState({})  // { [index]: seedCount }
+  const [copied,      setCopied]       = useState(false)
+  const [view,        setView]         = useState('sections')
+  const [sections,    setSections]     = useState(song.sections)
+  const [regenerating,setRegenerating] = useState({})
+  const [seedMap,     setSeedMap]      = useState({})
 
-  // ── Per-section regenerate ──────────────────────────────────────────────────
-  async function regenerateSection(sectionIndex) {
-    const apiKey  = localStorage.getItem('sci_api_key')
-    const provider= localStorage.getItem('sci_provider') || 'claude'
-    if (!apiKey) { alert('No API key stored — re-run from the cockpit.'); return }
+  // ── Per-section regenerate ────────────────────────────────────────────────
+  async function regenerateSection(idx) {
+    const apiKey   = localStorage.getItem('sci_api_key')
+    const provider = localStorage.getItem('sci_provider') || 'claude'
+    if (!apiKey) { alert('No API key — re-run from the cockpit.'); return }
 
-    const newSeed = (seedMap[sectionIndex] || 0) + 1
-    setSeedMap(prev => ({ ...prev, [sectionIndex]: newSeed }))
-    setRegenerating(prev => ({ ...prev, [sectionIndex]: true }))
-
+    const newSeed = (seedMap[idx] || 0) + 1
+    setSeedMap(prev => ({ ...prev, [idx]: newSeed }))
+    setRegenerating(prev => ({ ...prev, [idx]: true }))
     try {
-      const section = sections[sectionIndex]
+      const section = sections[idx]
       const res = await fetch('http://localhost:3001/api/section', {
         method:  'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -47,45 +48,45 @@ export default function SongDisplay({ song, analysis, onRestart }) {
           persona:          analysis?.persona,
           message:          analysis?.message,
           style:            analysis?.style,
-          previousSections: sections.slice(0, sectionIndex).map(s => s.lyrics),
-          apiKey,
-          provider,
-          seed: newSeed,
+          previousSections: sections.slice(0, idx).map(s => s.lyrics),
+          apiKey, provider, seed: newSeed,
         }),
       })
       const data = await res.json()
       if (data.success && data.section) {
         setSections(prev => {
-          const updated = [...prev]
-          updated[sectionIndex] = { ...updated[sectionIndex], lyrics: data.section.lyrics }
-          return updated
+          const next = [...prev]
+          next[idx] = { ...next[idx], lyrics: data.section.lyrics }
+          return next
         })
       }
     } catch (err) {
-      console.error('Regenerate error:', err)
+      console.error('Regen error:', err)
     } finally {
-      setRegenerating(prev => ({ ...prev, [sectionIndex]: false }))
+      setRegenerating(prev => ({ ...prev, [idx]: false }))
     }
   }
 
-  // ── Clipboard / download ────────────────────────────────────────────────────
   function copyToClipboard() {
     const text = sections.map(s => `[${s.type.toUpperCase()}]\n${s.lyrics}`).join('\n\n')
     navigator.clipboard.writeText(text).then(() => {
-      setCopied(true)
-      setTimeout(() => setCopied(false), 2000)
+      setCopied(true); setTimeout(() => setCopied(false), 2000)
     })
   }
 
   function downloadTxt() {
+    const conflictInfo = analysis?.message?.temporalProfile
+      ? `\nConflict Score: ${analysis.message.temporalProfile.conflictScore} | ${analysis.message.temporalProfile.logicalRelation?.relation}`
+      : ''
     const meta = [
-      `SONG — Generated by SCI (Structured Creative Intelligence) v2`,
+      `SONG — Generated by SCI (Structured Creative Intelligence) v2.1`,
       `Archetype:    ${song.metadata.archetype}`,
       `Core Message: ${song.metadata.coreMessage}`,
       `Language:     ${song.metadata.language}`,
       `Structure:    ${song.metadata.structure}`,
+      conflictInfo,
       `Generated:    ${new Date().toLocaleString()}`,
-      '', '═'.repeat(50), '',
+      '', '═'.repeat(52), '',
       sections.map(s => `[${s.type.toUpperCase()}]\n${s.lyrics}`).join('\n\n'),
     ].join('\n')
 
@@ -96,78 +97,103 @@ export default function SongDisplay({ song, analysis, onRestart }) {
     URL.revokeObjectURL(url)
   }
 
-  // ── Save session ────────────────────────────────────────────────────────────
   async function saveSession() {
     try {
       await fetch('http://localhost:3001/api/save', {
-        method: 'POST',
+        method:  'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          ...analysis,
-          sections,
-          metadata: song.metadata,
-        }),
+        body: JSON.stringify({ ...analysis, sections, metadata: song.metadata }),
       })
       alert('Session saved to ~/.sci-sessions/')
-    } catch { alert('Save failed — is the backend running?') }
+    } catch { alert('Save failed — backend running?') }
   }
+
+  // Temporal/PIRE data
+  const tp = analysis?.message?.temporalProfile
+  const conflictScore  = tp?.conflictScore
+  const logicalRel     = tp?.logicalRelation?.relation
+  const conflictLabel  = conflictScore >= 0.7 ? 'EXTREME' : conflictScore >= 0.4 ? 'HIGH' : 'MODERATE'
+  const relColor = {
+    CONTRADICTION: 'var(--magenta)',
+    CONTRARY:      'var(--warning)',
+    SUBCONTRARY:   'var(--green)',
+    NEUTRAL:       'var(--text-muted)',
+  }[logicalRel] || 'var(--text-muted)'
 
   return (
     <div className={styles.page}>
       <div className={styles.content}>
 
-        {/* Header */}
+        {/* ── Hero ─────────────────────────────────────────────────────────── */}
         <div className={styles.hero}>
-          <div className={styles.heroBadge}>◈ SCI v2</div>
-          <h2 className={styles.archetype}>{song.metadata.archetype}</h2>
+          <div className={styles.heroBadge}>◈ SCI v2 — EXCAVATED</div>
+          <GlitchText
+            text={song.metadata.archetype}
+            as="h1"
+            className={styles.archetype}
+            loop
+          />
           <p className={styles.coreMsg}>"{song.metadata.coreMessage}"</p>
+
           <div className={styles.metaRow}>
-            <span className={styles.metaTag}>{song.metadata.language}</span>
-            <span className={styles.metaTag}>{song.metadata.structure?.replace(/_/g,' ')}</span>
-            <span className={styles.metaTag}>{sections.length} sections</span>
+            <MetaTag v={song.metadata.language} />
+            <MetaTag v={song.metadata.structure?.replace(/_/g,' ')} />
+            <MetaTag v={`${sections.length} sections`} />
           </div>
+
+          {/* PIRE badge */}
+          {logicalRel && (
+            <div className={styles.pireBadge}>
+              <span className={styles.pireRel} style={{ color: relColor, borderColor: relColor }}>
+                {logicalRel}
+              </span>
+              <span className={styles.pireScore}>
+                Conflict {Math.round(conflictScore * 100)}/100 — {conflictLabel}
+              </span>
+            </div>
+          )}
         </div>
 
-        {/* View toggle */}
+        {/* ── View toggle ──────────────────────────────────────────────────── */}
         <div className={styles.viewToggle}>
           <button
-            className={[styles.viewBtn, view==='sections' ? styles.viewActive : ''].join(' ')}
+            className={[styles.viewBtn, view === 'sections' ? styles.viewActive : ''].join(' ')}
             onClick={() => setView('sections')}
-          >Structured View</button>
+          >Structured</button>
           <button
-            className={[styles.viewBtn, view==='plain' ? styles.viewActive : ''].join(' ')}
+            className={[styles.viewBtn, view === 'plain' ? styles.viewActive : ''].join(' ')}
             onClick={() => setView('plain')}
           >Plain Text</button>
         </div>
 
-        {/* Song body */}
+        {/* ── Song body ────────────────────────────────────────────────────── */}
         <div className={styles.songBody}>
           {view === 'sections' ? (
-            sections.map((section, i) => (
-              <div key={i} className={styles.sectionCard}>
-                <div className={styles.sectionMeta}>
-                  <span
-                    className={styles.sectionType}
-                    style={{ '--c': SECTION_COLORS[section.type] || 'var(--green)' }}
-                  >
-                    {section.type.toUpperCase()}
-                  </span>
-                  <span className={styles.sectionGoal}>
-                    {section.goal?.replace(/_/g,' ')}
-                  </span>
-                  {/* ↺ Per-section regenerate button (v2) */}
-                  <button
-                    className={styles.regenBtn}
-                    onClick={() => regenerateSection(i)}
-                    disabled={!!regenerating[i]}
-                    title={`Regenerate this ${section.type} (variation ${(seedMap[i]||0)+1})`}
-                  >
-                    {regenerating[i] ? '…' : '↺'}
-                  </button>
+            sections.map((section, i) => {
+              const color = SECTION_COLORS[section.type] || 'var(--green)'
+              return (
+                <div
+                  key={i}
+                  className={styles.sectionCard}
+                  style={{ '--c': color, animationDelay: `${i * 0.07}s` }}
+                >
+                  <div className={styles.sectionAccent} />
+                  <div className={styles.sectionMeta}>
+                    <span className={styles.sectionType}>{section.type.toUpperCase()}</span>
+                    <span className={styles.sectionGoal}>{section.goal?.replace(/_/g,' ')}</span>
+                    <button
+                      className={[styles.regenBtn, regenerating[i] ? styles.regenSpinning : ''].join(' ')}
+                      onClick={() => regenerateSection(i)}
+                      disabled={!!regenerating[i]}
+                      title={`Regenerate (variation ${(seedMap[i]||0)+1})`}
+                    >
+                      ↻
+                    </button>
+                  </div>
+                  <pre className={styles.lyrics}>{section.lyrics}</pre>
                 </div>
-                <pre className={styles.lyrics}>{section.lyrics}</pre>
-              </div>
-            ))
+              )
+            })
           ) : (
             <pre className={styles.plainLyrics}>
               {sections.map(s => `[${s.type.toUpperCase()}]\n${s.lyrics}`).join('\n\n')}
@@ -175,29 +201,28 @@ export default function SongDisplay({ song, analysis, onRestart }) {
           )}
         </div>
 
-        {/* Actions */}
+        {/* ── Actions ──────────────────────────────────────────────────────── */}
         <div className={styles.actions}>
           <button className={styles.copyBtn}     onClick={copyToClipboard}>
-            {copied ? '✓ Copied!' : '⎘ Copy Lyrics'}
+            {copied ? '✓ Copied' : '⌘ Copy'}
           </button>
-          <button className={styles.downloadBtn} onClick={downloadTxt}>
-            ↓ Download .txt
-          </button>
-          <button className={styles.saveBtn}     onClick={saveSession}>
-            ⬡ Save Session
-          </button>
-          <button className={styles.restartBtn}  onClick={onRestart}>
-            ↺ Write Another Song
-          </button>
+          <button className={styles.downloadBtn} onClick={downloadTxt}>↓ .txt</button>
+          <button className={styles.saveBtn}     onClick={saveSession}>⬡ Save</button>
+          <button className={styles.restartBtn}  onClick={onRestart}>↺ New Song</button>
         </div>
 
         <div className={styles.footer}>
+          <span className={styles.footerLine} />
           <p className={styles.footerNote}>
-            Built with <strong>SCI v2</strong> — Structured Creative Intelligence.
-            Identity → Persona → Message → Structure → Song.
+            SCI v2 · Identity → Persona → Message → Structure → Song
           </p>
+          <span className={styles.footerLine} />
         </div>
       </div>
     </div>
   )
+}
+
+function MetaTag({ v }) {
+  return <span className={styles.metaTag}>{v}</span>
 }

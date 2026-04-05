@@ -1,3 +1,4 @@
+/* KnobSlider — rotary dial with working range input overlay */
 .knob {
   display: flex;
   flex-direction: column;
@@ -5,6 +6,14 @@
   gap: 6px;
   user-select: none;
 }
+
+/* Wrapper positions dial + input as one unit */
+.dialWrapper {
+  position: relative;
+  width: 52px; height: 52px;
+}
+
+/* Visual dial ring */
 .dial {
   width: 52px; height: 52px;
   border-radius: 50%;
@@ -14,6 +23,7 @@
   transform: rotate(var(--deg, -135deg));
   transition: transform 0.05s linear;
   box-shadow: inset 0 0 8px rgba(0,0,0,0.6), 0 0 12px var(--green-glow);
+  pointer-events: none;
 }
 .marker {
   position: absolute;
@@ -24,13 +34,21 @@
   border-radius: 2px;
   box-shadow: 0 0 6px var(--green);
 }
+
+/* Input sits exactly over the dial wrapper, transparent + clickable */
 .slider {
   position: absolute;
+  inset: 0;
+  width: 100%; height: 100%;
   opacity: 0;
-  width: 52px; height: 52px;
   cursor: pointer;
-  margin-top: -58px;
+  z-index: 10;
+  margin: 0; padding: 0;
+  -webkit-appearance: none;
+  appearance: none;
+  border-radius: 50%;
 }
+
 .readout { text-align: center; }
 .val {
   display: block;
