@@ -1,13 +1,12 @@
 /**
- * styleMapper.js — v2
+ * styleMapper.js — v3
  *
  * Determines rhyme scheme, flow style, language blending, rawness level,
- * and lyrical devices for each song.
+ * lyrical devices, and now passes through craftConfig from cockpit overrides.
  *
- * v2 additions:
- *   - rawness field (0–100) → polished / honest / unfiltered descriptor
- *   - rhymeScheme can be overridden from cockpit picker
- *   - INTERNAL rhyme added to swatch list
+ * v3 additions:
+ *   - craftConfig passthrough → consumed by promptBuilder.buildCraftBlock()
+ *   - identityConfig passthrough → consumed by promptBuilder.buildIdentityFrameBlock()
  */
 
 const RHYME_SCHEMES = {
@@ -56,11 +55,6 @@ const IMAGERY_MAP = {
   vulnerability: 'bare imagery — exposed skin, still water, naked truth',
 };
 
-/**
- * Rawness descriptor — maps 0–100 slider to prose instructions
- * @param {number} rawness - 0 (polished) to 100 (unfiltered)
- * @returns {string}
- */
 function getRawnessDescriptor(rawness = 50) {
   if (rawness < 30)  return 'polished, metaphor-heavy, indirect imagery — say it beautifully, not bluntly';
   if (rawness <= 70) return 'honest and grounded — mix direct language with figurative imagery';
@@ -69,9 +63,9 @@ function getRawnessDescriptor(rawness = 50) {
 
 /**
  * Map all style decisions
- * @param {object} persona - from personaBuilder
- * @param {object} [overrides] - optional cockpit overrides: { rhymeScheme, rawness }
- * @returns {object} styleMap
+ * @param {object} persona   - from personaBuilder
+ * @param {object} overrides - cockpit overrides: { rhymeScheme, rawness, craft, identityConfig }
+ * @returns {object} styleMap  (includes craftConfig + identityConfig for promptBuilder)
  */
 function mapStyle(persona, overrides = {}) {
   const rhymeKey    = overrides.rhymeScheme || ARCHETYPE_RHYME_MAP[persona.archetype] || 'ABCB';
@@ -99,6 +93,9 @@ function mapStyle(persona, overrides = {}) {
     bridgeStyle:          'contrast — shift tone and imagery from main verses',
     rawness,
     rawnessDescriptor:    getRawnessDescriptor(rawness),
+    // v3: pass craft config and identity config through to promptBuilder
+    craftConfig:          overrides.craft || {},
+    identityConfig:       overrides.identityConfig || null,
   };
 }
 
