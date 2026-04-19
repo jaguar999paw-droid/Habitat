@@ -1,4 +1,4 @@
-# SCI v2 — Agent Prompt: Cockpit UI + ML Engine + Art Theme Overhaul
+# Habitat v2 — Agent Prompt: Cockpit UI + ML Engine + Art Theme Overhaul
 
 > Copy-paste this entire document as your opening message to a new Claude session.
 > The agent has MCP access to: ssh-shell-mcp (host: `localhost`, user: `kamau`),
@@ -8,7 +8,7 @@
 
 ## IDENTITY & REPO
 
-- **Project**: `sci-songwriting-engine` at `~/sci-songwriting-engine` on `localhost`
+- **Project**: `Habitat` at `~/sci-songwriting-engine` on `localhost`
 - **GitHub**: `https://github.com/jaguar999paw-droid/sci-songwriting-engine`
 - **Auth**: GitHub token is in `~/.bashrc` as `GITHUB_API_TOKEN` (use this for git push via `source ~/.bashrc`)
 - **Branch strategy**: Create branch `v2-cockpit-ml` from `main`, do all work there, then push and open a PR
@@ -18,7 +18,7 @@
 
 ## YOUR MISSION
 
-Perform a complete v2 overhaul of SCI across three dimensions:
+Perform a complete v2 overhaul of Habitat across three dimensions:
 
 1. **COCKPIT UI** — Replace the sequential questionnaire with a spatial, multi-panel cockpit interface
 2. **ML ENGINE** — Add a Python microservice for sentence-level NLP (embeddings + clustering) to replace crude keyword matching in the engine
@@ -314,7 +314,7 @@ After the cockpit, show a full-screen cinematic persona reveal:
 - Single "GENERATE →" button — no back button, no editing — commit mode
 
 ### 4g. New Backend Route: `POST /api/save`
-Save session to `~/.sci-sessions/[timestamp].json` — allows later retrieval.
+Save session to `~/.habitat-sessions/[timestamp].json` — allows later retrieval.
 Add `GET /api/sessions` to list saved sessions.
 
 ### 4h. ML: Add `language_model.py` using `langdetect` + custom Sheng wordlist
@@ -407,7 +407,7 @@ git push origin v2-cockpit-ml
 - [ ] Scan-line texture visible on dark backgrounds
 - [ ] Green glow on focused inputs
 - [ ] Per-section regenerate works in SongDisplay
-- [ ] Session save writes to `~/.sci-sessions/`
+- [ ] Session save writes to `~/.habitat-sessions/`
 - [ ] All 9 commits pushed to `v2-cockpit-ml` branch
 - [ ] PR opened on GitHub
 
@@ -420,7 +420,7 @@ git push origin v2-cockpit-ml
 - When writing CSS, never use `var(--accent)` or `var(--accent2)` — those are the old purple tokens. Always use `var(--green)`, `var(--magenta)`, etc.
 - The cockpit must work without the ML service running (graceful degradation to rule-based engine).
 - All new React components use CSS modules (`.module.css`), not inline styles.
-- `localStorage` key for cockpit state: `sci_cockpit_v2`.
+- `localStorage` key for cockpit state: `habitat_cockpit_v2`.
 - The reference drop-zone is NOT a file upload — text only.
 - Sheng detection wordlist must be expanded to 40+ words (list provided above in 4h).
 - Keep `Questionnaire.jsx` and `PersonaReview.jsx` in place (don't delete) — just stop routing to them. Mark as `@deprecated` in comments.
