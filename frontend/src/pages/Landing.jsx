@@ -90,7 +90,7 @@ export default function Landing({ onStart, apiKey, onSaveApiKey, provider, onSet
         {/* Logo */}
         <div className={styles.logo} style={{ animationDelay: '0s' }}>
           <GlitchText text="◈" as="span" className={styles.logoMark} loop />
-          <span className={styles.logoText}>SCI</span>
+          <span className={styles.logoText}>Habitat</span>
         </div>
 
         {/* Headline */}
