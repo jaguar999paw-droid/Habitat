@@ -1,7 +1,7 @@
-# SCI Architecture
+# Habitat Architecture
 
 ## Overview
-SCI (Structured Creative Intelligence) uses a 3-layer pipeline:
+Habitat uses a 3-layer pipeline:
 
 ```
 User Answers → ENGINE (pure JS) → AI LAYER (Claude/OpenAI) → Song
