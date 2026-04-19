@@ -1,11 +1,11 @@
 /**
- * server.js — SCI Songwriting Engine Backend v3
+ * server.js — Habitat Songwriting Engine Backend v3
  *
  * Routes:
  *   POST /api/analyze     → Parse identity (ML-enhanced, rule-based fallback)
  *   POST /api/generate    → Generate full song
  *   POST /api/section     → Generate / regenerate a single section
- *   POST /api/save        → Save session to ~/.sci-sessions/[timestamp].json
+ *   POST /api/save        → Save session to ~/.habitat-sessions/[timestamp].json
  *   GET  /api/sessions    → List saved sessions
  *   GET  /api/health      → Health check (includes ML service status)
  *
@@ -35,7 +35,7 @@ const { generateFullSong, generateSection, formatSong } = require('../ai/generat
 const app  = express();
 const PORT = process.env.PORT || 3001;
 
-const SESSIONS_DIR = path.join(os.homedir(), '.sci-sessions');
+const SESSIONS_DIR = path.join(os.homedir(), '.habitat-sessions');
 if (!fs.existsSync(SESSIONS_DIR)) fs.mkdirSync(SESSIONS_DIR, { recursive: true });
 
 app.use(cors());
@@ -50,7 +50,7 @@ app.get('/api/health', async (req, res) => {
     const r = await fetch('http://localhost:3002/ml/health', { signal: controller.signal });
     if (r.ok) mlStatus = (await r.json()).status;
   } catch { /* ML offline */ }
-  res.json({ status: 'ok', version: '3.0.0', engine: 'SCI Songwriting Engine', mlService: mlStatus });
+  res.json({ status: 'ok', version: '3.0.0', engine: 'Habitat Songwriting Engine', mlService: mlStatus });
 });
 
 // ── Analyze Identity ──────────────────────────────────────────────────────────
@@ -183,7 +183,7 @@ app.get('/api/sessions', (req, res) => {
 
 // ── Start ─────────────────────────────────────────────────────────────────────
 app.listen(PORT, () => {
-  console.log(`\n🎵 SCI Songwriting Engine v3 — http://localhost:${PORT}`);
+  console.log(`\n🎵 Habitat Songwriting Engine v3 — http://localhost:${PORT}`);
   console.log(`   Craft layer: lyricsStyleEngine + identityConfig + altEgoEngine`);
   console.log(`   ML Service:  http://localhost:3002`);
   console.log(`   Sessions:    ${SESSIONS_DIR}\n`);
