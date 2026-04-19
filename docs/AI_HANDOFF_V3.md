@@ -1,4 +1,4 @@
-# SCI — Agent Handoff Document v3
+# Habitat — Agent Handoff Document v3
 **Branch:** `main`
 **Last agent session:** 2026-04-07
 **Engine version:** v3 (Craft Layer + 6-Angle Identity + Alter Ego)
