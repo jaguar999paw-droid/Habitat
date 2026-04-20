@@ -1,142 +1,121 @@
 # SCI Songwriting Engine — Habitat Upgrade Progress
 
-## Branch: `v2-cockpit-ml`
+## Branch: `v2-cockpit-ml`  ·  Current version: Cockpit v4
 
 ---
 
 ## What is the Habitat Upgrade?
 
-The engine is being refactored from a **flat questionnaire input model** into a
-**staged, phase-aware identity construction interface** — mirroring the way
-Habitat-Lab exposes agent state: surface inferences, allow human correction,
-maintain a live schema-validated property bag throughout.
+Refactoring from a flat questionnaire into a **staged, phase-aware identity
+construction interface** — mirroring Habitat-Lab's pattern: surface inferences,
+allow human correction, maintain a live schema-validated property bag.
 
 ---
 
-## Completed
-
-### Engine Layer
-- `engine/identitySchema.js` — single source of truth for all identity properties.
-  Types, ranges, defaults, UI control hints, and engine targets.
-- `engine/propertyTensionEngine.js` — cross-property tension detection.
-  Flags contradictions (e.g. high certainty + high confusion), surfaces tension summary.
-- `engine/identityParser.js` — updated (v3) to use schema defaults, pass craft/identityConfig.
-- `backend/server.js` — v3: wires craft + identityConfig overrides through to promptBuilder.
-
-### Frontend Components
-| Component | Status | Purpose |
-|---|---|---|
-| `EmotionGrid.jsx` | ✅ Done | Phase 2 emotion selector — primary + up to 3 secondary |
-| `IdentitySliders.jsx` | ✅ Done | Phase 3 mixing board — rawness, certainty, fault, exposure |
-| `InferencePreview.jsx` | ✅ Done | Engine inference display — clickable override chips |
-| `IdentityRadar.jsx` | ✅ Done | Hexagonal SVG radar — 6-angle identity visualization |
-
-### Pages
-| Page | Status | Notes |
-|---|---|---|
-| `Cockpit.jsx` | ✅ Done (v3) | Refactored to 4-phase flow. See below. |
-
----
-
-## Cockpit v3 — 4-Phase Flow
+## 4-Phase Flow
 
 ```
-Phase 1: SPEAK
-  Core message · Emotional truth · Social conflict · Sub-themes · Reference text
-  → POST /api/analyze
-  ↓
-Phase 2: FEEL
-  InferencePreview (engine detections, clickable overrides)
-  EmotionGrid (confirm / correct primary + secondary emotions)
-  ↓
-Phase 3: KNOW
-  IdentitySliders (mixing board: rawness, certainty, fault, exposure)
-  IdentityRadar (live hexagonal output — 6-angle identity × temporal weights)
-  ↓
-Phase 4: CRAFT
-  Archetype · Energy/Rawness knobs · Language mix · Perspective · Rhyme scheme
-  Config summary + mini radar
-  → IGNITE → onDone()
+Phase 1: SPEAK  → free text + word counts + health check → POST /api/analyze
+Phase 2: FEEL   → InferencePreview + re-analyze button + EmotionGrid
+Phase 3: KNOW   → IdentitySliders (mixing board) + IdentityRadar (live hex)
+Phase 4: CRAFT  → Archetype + AlterEgo + Energy + Language + Rhyme → IGNITE
 ```
 
-**onDone() payload** (unchanged contract, extended):
+### onDone() payload
 ```js
 {
   mainIdea, emotionalTruth, socialConflict, referenceText,
   overrides: {
     rawness, energyValue, rhymeScheme, perspective, languageMix,
-    archetype, subThemes,
-    primaryEmotion, secondaryEmotions,   // NEW
-    identitySliders: { rawness, decisiveness, attribution, vulnerability_level }  // NEW
+    archetype, subThemes, primaryEmotion, secondaryEmotions,
+    identitySliders: { rawness, decisiveness, attribution, vulnerability_level },
+    alterEgo,
+    identityConfig: { activeAlterEgo }
   },
-  analyzed: <raw /api/analyze response>   // NEW — avoids re-analysis downstream
+  analyzed: <raw /api/analyze response>
 }
 ```
 
 ---
 
-## IdentityRadar — Architecture
+## Completed — All Sessions
 
-The radar maps the **6-angle identity framework** onto a hexagonal SVG:
-
-| Axis | Source |
+| Session | Work |
 |---|---|
-| Past · Real | `temporalProfile.temporal.past × attribution` |
-| Past · Shadow | `temporalProfile.temporal.past × (1 - attribution)` |
-| Now · Real | `temporalProfile.temporal.present × decisiveness` |
-| Now · Shadow | `temporalProfile.temporal.present × (1 - decisiveness)` |
-| Future · Vision | `temporalProfile.temporal.future × (1 - conflictScore)` |
-| Future · Fear | `temporalProfile.temporal.future × conflictScore` |
-
-Values re-derive live as the user moves the IdentitySliders. The radar
-updates in Phase 3 and shows a mini version in Phase 4's config sidebar.
+| N-2 | Engine layer: identitySchema, propertyTensionEngine, altEgoEngine, identityConfig |
+| N-1 | Frontend components: EmotionGrid, IdentitySliders, InferencePreview |
+| N   | IdentityRadar (hex SVG), Cockpit v3 (4-phase tab flow) |
+| N+1 | Override modal (InferencePreview), radar dot tooltips, Phase 2→parser injection, PERSIST_KEY migration, mobile CSS |
+| N+2 | **Full green/lime cockpit overhaul (Cockpit v4)** — see below |
 
 ---
 
+## Session N+2 — Complete
 
-## Completed — Session N+1
+### UI: Green/Lime Instrument Cockpit
+Full CSS rewrite with a dark `#0a120a` background, `#a8ff3a` lime primary accent,
+`#39d353` green secondary, magenta for emotion, amber for tension.
 
-| Item | What was done |
+Key design tokens:
+- `--lime` `#a8ff3a` — primary CTA, panel labels, radar
+- `--lime-dim` `#6bba1c` — subdued accent, borders on hover
+- `--lime-glow` — subtle fill for active states
+- `--green` `#39d353` — secondary signals, meters
+- `--magenta` `#dd44ff` — emotion accents
+- Phase tabs: bottom-border `--lime` + glowing dot indicator on active
+- IGNITE button: shimmer sweep animation on hover + `ignitePulse` when firing
+
+### New features delivered
+
+| Feature | Detail |
 |---|---|
-| `InferencePreview` override modal | Real modal UI — chip click opens select panel, `onOverride(property, newValue)` propagates up |
-| Phase 2 → parser injection | `inferenceOverrides` state in Cockpit, sent to `/api/analyze`, `identityParser.js` merges them (sets confidence=1.0) |
-| `IdentityRadar` dot tooltip | SVG-native tooltip on hover — axis label + `value / 100`, bounds-clamped, pointer-events:none |
-| `PERSIST_KEY` v2 migration | `useEffect` on mount calls `localStorage.removeItem('sci_cockpit_v2')` |
-| Mobile layout | `@media (max-width: 700px)` — phase nav wraps, knowGrid/craftGrid go 1-col, buttons flex |
+| **Word count indicators** | Live `Nw` badge under each Phase 1 textarea; total word count in Phase tab |
+| **Health indicator** | `GET /api/health` on mount — green dot (engine+ML ok), amber (engine only), red (engine down) |
+| **Re-analyze button** | Phase 2 — replays `POST /api/analyze` with accumulated `inferenceOverrides`; badge shows count of active overrides |
+| **Alter-ego picker** | Phase 4 CRAFT — 7 options (None, Confessor, Witness, Trickster, Preacher, Ghost, Street Philosopher); wired into `onDone()` as `alterEgo` + `identityConfig.activeAlterEgo` |
+| **Endpoint tester** | Fixed bottom-right panel — tests all 5 endpoints (`/health`, `/analyze`, `/generate`\*, `/sessions`, `/delta`) with live status chips (✓ 200 42ms / ✗ ERR) |
+| **PERSIST_KEY migration** | Clears both `sci_cockpit_v2` and `sci_cockpit_v3` on mount |
+| **Phase done indicators** | Completed phase tabs show `✓` in the number badge |
+| **Analyze status row** | After successful analysis: shows emotion/conflict count + ML vs rule-based |
 
-### Override data flow
+\* `/generate` skipped in tester (requires live API key)
+
+### Override data flow (complete)
 ```
 User clicks chip in InferencePreview
-  → OverrideModal opens (select from valid options)
-  → onConfirm(property, newValue) called
-  → Cockpit.handleOverride(property, newValue)
-      setInferenceOverrides({ ...prev, [property]: newValue })
-      if primary_emotion → upd({ primaryEmotion: newValue })
-      if temporal_dominant → patch analyzed state directly (radar updates)
-  → Next POST /api/analyze sends inferenceOverrides in body
-  → server.js passes to parseIdentity(answers, inferenceOverrides)
-  → identityParser merges: overridden property promoted, confidence = 1.0
+  → OverrideModal (select valid value)
+  → onConfirm(property, newValue)
+  → Cockpit.handleOverride → setInferenceOverrides
+  → mirrors to local state (primaryEmotion / analyzed.temporalProfile)
+  → Re-analyze button → POST /api/analyze with inferenceOverrides
+  → server.js → parseIdentity(answers, inferenceOverrides)
+  → parser: overridden property promoted, confidence = 1.0
+  → InferencePreview re-renders with updated detections
 ```
-
-## Still To Do
-
-*(All Phase 3 items completed this session — see below)*
-
-### Future enhancements
-- [ ] `InferencePreview` — keyboard navigation for override modal (tab/enter/esc)
-- [ ] `IdentityRadar` — touch support for tooltip on mobile (tap-to-reveal)
-- [ ] Phase 1 — word count indicator on textareas
-- [ ] Alter-ego picker in Phase 4 CRAFT (schema already supports it)
-- [ ] Re-analyze button in Phase 2 that replays `/api/analyze` with current `inferenceOverrides`
 
 ---
 
-## Session History
+## Still To Do (future enhancements)
 
-| Date | Work |
-|---|---|
-| Session N-2 | Built engine layer: identitySchema, propertyTensionEngine, altEgoEngine, identityConfig |
-| Session N-1 | Built frontend components: EmotionGrid, IdentitySliders, InferencePreview |
-| Session N   | Built IdentityRadar, refactored Cockpit to 4-phase flow, wrote this doc, committed |
-| Session N+1 | Override modal (InferencePreview), radar dot tooltips, Phase 2→parser injection, PERSIST_KEY migration, mobile CSS |
+- [ ] Override modal — keyboard nav (Tab/Enter/Esc)
+- [ ] Radar dot tooltip — touch/tap support on mobile
+- [ ] `/api/section` regeneration UI in song display page
+- [ ] Session history browser (use `GET /api/sessions` + `POST /api/delta`)
+- [ ] Phase 1 — drag-to-reorder sub-themes
+- [ ] `POST /api/save` — auto-save after IGNITE
+
+---
+
+## Engine Layer Reference
+
+| File | Version | Purpose |
+|---|---|---|
+| `engine/identityParser.js` | v2.1 | Async parse + `userOverrides` arg |
+| `engine/identitySchema.js` | v1   | Property schema, validation, defaults |
+| `engine/propertyTensionEngine.js` | v1 | Cross-property tension detection |
+| `engine/altEgoEngine.js` | v1 | 6 built-in persona masks |
+| `engine/identityConfig.js` | v1 | 6-angle identity framework |
+| `engine/lyricsStyleEngine.js` | v3 | Craft layer: rhetorical devices, prosody, humor |
+| `engine/styleMapper.js` | v3 | Maps persona → style config |
+| `backend/server.js` | v3.1 | 6 routes, inferenceOverrides wired |
 
