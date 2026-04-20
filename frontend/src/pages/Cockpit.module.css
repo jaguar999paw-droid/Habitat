@@ -1,404 +1,677 @@
-/* Cockpit — 3-panel instrument layout */
-.cockpit {
-  display: grid;
-  grid-template-columns: 280px 1fr 260px;
-  gap: 0;
-  min-height: calc(100vh - 40px - 72px); /* bar top + ignite dock */
-  margin-top: 40px; /* PersonaLiveBar height */
-  padding-bottom: 72px;
-  border-top: 1px solid var(--grey-dark);
+/* ═══════════════════════════════════════════════════════════════════════════
+   COCKPIT.MODULE.CSS — SCI Songwriting Engine
+   Theme: Green / Lime instrument panel. Dark background, lime accents.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ── CSS custom properties (scoped to cockpit) ─────────────────────────────── */
+:root {
+  --g0:  #0a120a;   /* deepest bg */
+  --g1:  #0d170d;   /* surface bg */
+  --g2:  #111f11;   /* elevated surface */
+  --g3:  #162716;   /* panel border bg */
+  --gb:  #1e3a1e;   /* border default */
+  --gb2: #2a5a2a;   /* border hover/active */
+
+  --lime:      #a8ff3a;   /* primary accent */
+  --lime-dim:  #6bba1c;   /* subdued accent */
+  --lime-glow: rgba(168,255,58,0.10);
+  --lime-glow2:rgba(168,255,58,0.18);
+
+  --green:     #39d353;   /* secondary green */
+  --green-dim: #1e7a2c;
+
+  --teal:      #00ffcc;   /* info / temporal */
+  --amber:     #ffb830;   /* warning / tension */
+  --red-hot:   #ff4060;   /* error / danger */
+  --magenta:   #dd44ff;   /* emotion accent */
+  --mag-glow:  rgba(221,68,255,0.12);
+
+  --text:       #e8fce8;
+  --text-2:     #9abf9a;
+  --text-3:     #5a7a5a;
+
+  --font-mono:    'JetBrains Mono', 'Fira Code', 'Courier New', monospace;
+  --font-display: var(--font-mono);
+
+  --radius:    6px;
+  --radius-sm: 4px;
+
+  /* radar overrides */
+  --radar-grid:       rgba(168,255,58,0.12);
+  --radar-spoke:      rgba(168,255,58,0.08);
+  --radar-fill:       rgba(168,255,58,0.14);
+  --radar-stroke:     #a8ff3a;
+  --radar-dot:        #a8ff3a;
+  --radar-label:      rgba(168,255,58,0.65);
+  --radar-centre-bg:  rgba(10,18,10,0.8);
+  --color-accent:     #a8ff3a;
 }
 
-/* Panel base */
-.panel {
-  display: flex; flex-direction: column; gap: 0;
-  border-right: 1px solid var(--grey-dark);
-  overflow-y: auto;
-  padding: 0 0 24px;
-}
-.panel:last-child { border-right: none; }
-.panelCentre { background: color-mix(in srgb, var(--green) 2%, var(--bg)); }
-
-.panelHeader {
-  display: flex; align-items: baseline; gap: 8px;
-  padding: 14px 16px 10px;
-  border-bottom: 1px solid var(--grey-dark);
-  position: sticky; top: 0;
-  background: rgba(4,4,7,0.95);
-  backdrop-filter: blur(8px);
-  z-index: 10;
-}
-.panelLabel {
-  font-family: var(--font-display);
-  font-size: 28px; letter-spacing: 4px;
-  color: var(--green);
-}
-.panelSub {
-  font-size: 10px; text-transform: uppercase;
-  letter-spacing: 1.5px; color: var(--text-muted);
+/* ─── CHROME WRAPPER ────────────────────────────────────────────────────────── */
+.cockpitRoot {
+  min-height: 100vh;
+  background: var(--g0);
+  color: var(--text);
+  display: flex;
+  flex-direction: column;
   font-family: var(--font-mono);
 }
 
-/* Field block */
-.fieldBlock { padding: 14px 16px; border-bottom: 1px solid var(--grey-dark); }
-.fieldLabel {
-  font-size: 9px; text-transform: uppercase;
-  letter-spacing: 2px; color: var(--text-muted);
-  font-family: var(--font-mono); margin-bottom: 10px;
-}
-
-/* Rejection chips */
-.chipGrid { display: flex; flex-wrap: wrap; gap: 5px; }
-.rejectChip {
-  padding: 4px 9px;
-  background: var(--surface2);
-  border: 1px solid var(--grey-dark);
-  border-radius: 3px;
-  font-size: 10px; color: var(--text-muted);
-  font-family: var(--font-mono);
-  cursor: pointer; transition: all 0.12s;
-}
-.rejectChip:hover { border-color: var(--magenta-dim); color: var(--text); }
-.chipActive {
-  border-color: var(--magenta) !important;
-  color: var(--magenta) !important;
-  background: var(--magenta-glow) !important;
-}
-.autoNote {
-  font-size: 10px; color: var(--text-muted);
-  font-style: italic; margin-top: 8px;
-  text-align: center;
-}
-
-/* Knobs row */
-.knobs { display: flex; gap: 20px; justify-content: center; padding: 8px 0; }
-
-/* Textareas */
-.textarea {
-  width: 100%; padding: 12px;
-  background: var(--surface2);
-  border: 1px solid var(--grey-dark);
-  border-radius: var(--radius);
-  color: var(--text); font-family: var(--font-sans); font-size: 14px;
-  line-height: 1.6; resize: vertical;
-  transition: border-color 0.2s;
-}
-.textarea::placeholder { color: var(--text-muted); font-style: italic; }
-.textareaMagenta:focus { box-shadow: 0 0 0 2px var(--magenta), 0 0 16px var(--magenta-glow) !important; }
-
-/* Perspective pills */
-.pills { display: flex; gap: 6px; }
-.pill {
-  flex: 1; padding: 7px;
-  background: var(--surface2);
-  border: 1px solid var(--grey-dark);
-  border-radius: var(--radius-sm);
-  font-size: 11px; font-family: var(--font-mono);
-  color: var(--text-muted); cursor: pointer; transition: all 0.15s;
-  text-align: center;
-}
-.pill:hover { border-color: var(--green-dim); color: var(--text); }
-.pillActive {
-  border-color: var(--green) !important;
-  color: var(--green) !important;
-  background: var(--green-glow) !important;
-}
-
-/* Config preview */
-.previewBox {
-  margin: 14px 16px 0;
-  background: var(--surface2);
-  border: 1px solid var(--grey-dark);
-  border-radius: var(--radius);
-  padding: 12px;
-}
-.previewLabel {
-  font-size: 9px; text-transform: uppercase; letter-spacing: 2px;
-  color: var(--text-muted); font-family: var(--font-mono);
-  margin-bottom: 8px; padding-bottom: 6px;
-  border-bottom: 1px solid var(--grey-dark);
-}
-.configLine { display: flex; gap: 6px; align-items: baseline; margin-bottom: 4px; }
-.configKey { font-family: var(--font-mono); font-size: 9px; color: var(--text-muted); width: 42px; flex-shrink: 0; text-transform: uppercase; }
-.configVal { font-family: var(--font-mono); font-size: 11px; color: var(--green); }
-
-/* Ignite dock */
-.igniteDock {
-  position: fixed; bottom: 0; left: 0; right: 0;
-  background: rgba(4,4,7,0.96);
+/* ─── PERSONA LIVE BAR (top HUD) ────────────────────────────────────────────── */
+.liveBar {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  height: 44px;
+  background: rgba(10,18,10,0.97);
+  border-bottom: 1px solid var(--gb);
+  display: flex;
+  align-items: center;
+  padding: 0 16px;
+  gap: 16px;
   backdrop-filter: blur(12px);
-  border-top: 1px solid var(--grey-dark);
-  padding: 12px 20px;
-  display: flex; align-items: center; gap: 16px;
-  z-index: 200;
+  font-size: 10px;
+  letter-spacing: 0.08em;
 }
-.igniteBtn {
-  flex: 1; max-width: 360px; margin: 0 auto;
-  padding: 14px;
-  background: var(--green); color: #000;
-  border: none; border-radius: var(--radius);
-  font-family: var(--font-display);
-  font-size: 28px; letter-spacing: 4px;
-  cursor: pointer; transition: background 0.2s, color 0.2s;
-}
-.igniteBtn:hover:not(:disabled) {
-  background: var(--magenta); color: #fff;
-}
-.igniteBtn:disabled { opacity: 0.3; cursor: not-allowed; }
-.igniting { animation: ignite 0.8s ease; }
-.igniteHint { font-size: 11px; color: var(--text-muted); font-style: italic; }
 
-/* ── Phase navigation ─────────────────────────────────────────────────────── */
+/* ─── PHASE NAVIGATION BAR ──────────────────────────────────────────────────── */
 .phaseNav {
   display: flex;
   gap: 0;
-  border-bottom: 1px solid rgba(255,255,255,0.08);
-  margin-bottom: 0;
-  padding: 0 1.5rem;
+  background: rgba(10,18,10,0.98);
+  border-bottom: 1px solid var(--gb);
+  padding: 0 20px;
+  position: sticky;
+  top: 44px;
+  z-index: 90;
 }
 
 .phaseTab {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 10px 20px;
+  gap: 9px;
+  padding: 11px 22px;
   background: none;
   border: none;
   border-bottom: 2px solid transparent;
-  color: rgba(255,255,255,0.35);
-  font-family: var(--font-mono, monospace);
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 0.12em;
+  color: var(--text-3);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.18em;
   cursor: pointer;
-  transition: color 0.2s, border-color 0.2s;
+  transition: color 0.18s, border-color 0.18s;
+  position: relative;
 }
 
-.phaseTab:hover {
-  color: rgba(255,255,255,0.7);
-}
+.phaseTab:hover { color: var(--text-2); }
 
 .phaseTabActive {
-  color: #fff;
-  border-bottom-color: var(--color-accent, #00c8ff);
+  color: var(--lime);
+  border-bottom-color: var(--lime);
+}
+
+.phaseTabActive::after {
+  content: '';
+  position: absolute;
+  bottom: -1px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--lime);
+  box-shadow: 0 0 8px var(--lime);
 }
 
 .phaseTabLocked {
-  opacity: 0.3;
+  opacity: 0.25;
   cursor: not-allowed;
+  pointer-events: none;
 }
 
 .phaseN {
-  width: 18px;
-  height: 18px;
+  width: 20px;
+  height: 20px;
   border-radius: 50%;
-  background: rgba(255,255,255,0.08);
+  background: rgba(255,255,255,0.05);
+  border: 1px solid var(--gb);
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 9px;
+  flex-shrink: 0;
+  transition: all 0.18s;
 }
 
 .phaseTabActive .phaseN {
-  background: var(--color-accent, #00c8ff);
+  background: var(--lime);
+  border-color: var(--lime);
   color: #000;
+  box-shadow: 0 0 10px var(--lime-glow2);
 }
 
-/* ── Phase body wrapper ───────────────────────────────────────────────────── */
+.phaseTabDone .phaseN {
+  background: var(--green-dim);
+  border-color: var(--green);
+  color: var(--green);
+}
+
+/* word count badge next to phase tab */
+.wordBadge {
+  font-size: 8px;
+  color: var(--text-3);
+  letter-spacing: 0;
+  margin-left: -4px;
+}
+
+/* ─── PHASE BODY ─────────────────────────────────────────────────────────────── */
 .phaseBody {
-  padding: 1.5rem;
-  max-width: 960px;
+  flex: 1;
+  padding: 24px 28px;
+  max-width: 1100px;
   margin: 0 auto;
+  width: 100%;
+  box-sizing: border-box;
 }
 
-/* ── Phase layouts ────────────────────────────────────────────────────────── */
+/* ─── PANEL HEADER ───────────────────────────────────────────────────────────── */
+.panelHeader {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  margin-bottom: 24px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--gb);
+}
+
+.panelLabel {
+  font-size: 30px;
+  letter-spacing: 6px;
+  color: var(--lime);
+  text-shadow: 0 0 20px var(--lime-glow2);
+  font-weight: 700;
+}
+
+.panelSub {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  color: var(--text-3);
+}
+
+/* ─── FIELD BLOCK ────────────────────────────────────────────────────────────── */
+.fieldBlock {
+  margin-bottom: 20px;
+}
+
+.fieldLabel {
+  font-size: 8.5px;
+  text-transform: uppercase;
+  letter-spacing: 2.5px;
+  color: var(--text-3);
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.fieldRequired {
+  color: var(--lime-dim);
+}
+
+/* ─── TEXTAREAS ──────────────────────────────────────────────────────────────── */
+.textarea {
+  width: 100%;
+  padding: 12px 14px;
+  background: var(--g2);
+  border: 1px solid var(--gb);
+  border-radius: var(--radius);
+  color: var(--text);
+  font-family: var(--font-mono);
+  font-size: 13px;
+  line-height: 1.65;
+  resize: vertical;
+  transition: border-color 0.18s, box-shadow 0.18s;
+  box-sizing: border-box;
+}
+
+.textarea::placeholder { color: var(--text-3); font-style: italic; }
+
+.textarea:focus {
+  outline: none;
+  border-color: var(--lime-dim);
+  box-shadow: 0 0 0 2px var(--lime-glow), 0 0 16px var(--lime-glow);
+}
+
+.textareaMagenta:focus {
+  border-color: var(--magenta) !important;
+  box-shadow: 0 0 0 2px var(--mag-glow), 0 0 16px var(--mag-glow) !important;
+}
+
+/* word count row */
+.wordCountRow {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 3px;
+}
+
+.wordCount {
+  font-size: 9px;
+  color: var(--text-3);
+  letter-spacing: 0.06em;
+  transition: color 0.2s;
+}
+
+.wordCountActive { color: var(--lime-dim); }
+
+/* ─── PHASE LAYOUTS ──────────────────────────────────────────────────────────── */
 .speakPhase,
 .feelPhase {
-  max-width: 640px;
+  max-width: 680px;
 }
-
-.knowPhase {}
 
 .knowGrid {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 2rem;
+  grid-template-columns: 1fr 320px;
+  gap: 32px;
   align-items: start;
 }
-
-.knowLeft,
-.knowRight {}
-
-.craftPhase {}
 
 .craftGrid {
   display: grid;
-  grid-template-columns: 1fr 1fr 240px;
-  gap: 2rem;
+  grid-template-columns: 1fr 1fr 260px;
+  gap: 28px;
   align-items: start;
 }
 
-.craftCol {}
-
-/* ── Phase CTAs ───────────────────────────────────────────────────────────── */
+/* ─── CTA BUTTONS ────────────────────────────────────────────────────────────── */
 .phaseCta {
   display: flex;
   flex-direction: column;
   gap: 10px;
-  margin-top: 1.5rem;
+  margin-top: 20px;
   align-items: flex-start;
 }
 
 .ctaBtn {
-  padding: 12px 28px;
-  background: var(--color-accent, #00c8ff);
+  padding: 11px 28px;
+  background: var(--lime);
   color: #000;
   border: none;
-  border-radius: 4px;
-  font-family: var(--font-mono, monospace);
-  font-size: 12px;
+  border-radius: var(--radius-sm);
+  font-family: var(--font-mono);
+  font-size: 11px;
   font-weight: 700;
-  letter-spacing: 0.1em;
+  letter-spacing: 0.14em;
   cursor: pointer;
-  transition: opacity 0.2s, transform 0.1s;
-}
-
-.ctaBtn:disabled {
-  opacity: 0.3;
-  cursor: not-allowed;
+  transition: background 0.18s, box-shadow 0.18s, transform 0.1s;
 }
 
 .ctaBtn:not(:disabled):hover {
-  opacity: 0.85;
+  background: #c4ff5e;
+  box-shadow: 0 0 18px var(--lime-glow2);
 }
 
-.ctaBtn:not(:disabled):active {
-  transform: scale(0.98);
-}
-
-.ctaBtnBusy {
-  opacity: 0.7;
-}
+.ctaBtn:not(:disabled):active { transform: scale(0.97); }
+.ctaBtn:disabled { opacity: 0.25; cursor: not-allowed; }
+.ctaBtnBusy { opacity: 0.65; }
 
 .backBtn {
-  padding: 10px 20px;
+  padding: 9px 20px;
   background: none;
-  color: rgba(255,255,255,0.4);
-  border: 1px solid rgba(255,255,255,0.12);
-  border-radius: 4px;
-  font-family: var(--font-mono, monospace);
-  font-size: 11px;
+  color: var(--text-3);
+  border: 1px solid var(--gb);
+  border-radius: var(--radius-sm);
+  font-family: var(--font-mono);
+  font-size: 10px;
   cursor: pointer;
-  transition: color 0.2s, border-color 0.2s;
+  letter-spacing: 0.1em;
+  transition: color 0.18s, border-color 0.18s;
 }
 
 .backBtn:hover {
-  color: rgba(255,255,255,0.8);
-  border-color: rgba(255,255,255,0.3);
+  color: var(--text-2);
+  border-color: var(--gb2);
 }
 
 .skipBtn {
   background: none;
   border: none;
-  color: rgba(255,255,255,0.25);
-  font-family: var(--font-mono, monospace);
-  font-size: 10px;
+  color: var(--text-3);
+  font-family: var(--font-mono);
+  font-size: 9px;
   cursor: pointer;
-  padding: 4px 0;
+  padding: 3px 0;
   text-decoration: underline;
+  letter-spacing: 0.06em;
 }
 
-.skipBtn:hover {
-  color: rgba(255,255,255,0.5);
-}
+.skipBtn:hover { color: var(--text-2); }
 
 .ctaHint {
-  font-size: 11px;
-  color: rgba(255,255,255,0.3);
+  font-size: 10px;
+  color: var(--text-3);
   margin: 0;
+  font-style: italic;
 }
 
 .ctaError {
-  font-size: 11px;
-  color: #ff6060;
+  font-size: 10px;
+  color: var(--red-hot);
   margin: 0;
 }
 
+/* re-analyze button (Phase 2) */
+.reAnalyzeBtn {
+  padding: 8px 16px;
+  background: none;
+  border: 1px solid var(--lime-dim);
+  border-radius: var(--radius-sm);
+  color: var(--lime-dim);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  cursor: pointer;
+  transition: all 0.18s;
+}
+.reAnalyzeBtn:hover {
+  background: var(--lime-glow);
+  color: var(--lime);
+  border-color: var(--lime);
+}
+.reAnalyzeBtn:disabled { opacity: 0.3; cursor: not-allowed; }
+
+/* ─── PHASE NAV 2 (back / next row) ─────────────────────────────────────────── */
 .phaseNav2 {
   display: flex;
   gap: 12px;
   align-items: center;
-  margin-top: 2rem;
-  padding-top: 1.5rem;
-  border-top: 1px solid rgba(255,255,255,0.06);
+  margin-top: 28px;
+  padding-top: 20px;
+  border-top: 1px solid var(--gb);
 }
 
-/* ── Radar mini (Phase 4 sidebar) ─────────────────────────────────────────── */
+/* ─── IGNITE BUTTON ──────────────────────────────────────────────────────────── */
+.igniteBtn {
+  padding: 12px 36px;
+  background: var(--lime);
+  color: #000;
+  border: none;
+  border-radius: var(--radius-sm);
+  font-family: var(--font-mono);
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  cursor: pointer;
+  transition: background 0.2s, box-shadow 0.2s, transform 0.1s;
+  position: relative;
+  overflow: hidden;
+}
+
+.igniteBtn::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.15), transparent);
+  transform: translateX(-100%);
+  transition: transform 0.5s;
+}
+
+.igniteBtn:hover:not(:disabled)::before { transform: translateX(100%); }
+
+.igniteBtn:hover:not(:disabled) {
+  background: #c4ff5e;
+  box-shadow: 0 0 30px var(--lime-glow2), 0 0 60px rgba(168,255,58,0.08);
+}
+
+.igniteBtn:active:not(:disabled) { transform: scale(0.97); }
+.igniteBtn:disabled { opacity: 0.25; cursor: not-allowed; }
+
+.igniting {
+  animation: ignitePulse 0.9s ease infinite;
+}
+
+@keyframes ignitePulse {
+  0%,100% { box-shadow: 0 0 20px var(--lime-glow2); }
+  50%      { box-shadow: 0 0 40px rgba(168,255,58,0.35); }
+}
+
+/* ─── CONFIG PREVIEW (Phase 4) ───────────────────────────────────────────────── */
+.previewBox {
+  background: var(--g2);
+  border: 1px solid var(--gb);
+  border-radius: var(--radius);
+  padding: 14px;
+}
+
+.previewLabel {
+  font-size: 8px;
+  text-transform: uppercase;
+  letter-spacing: 2.5px;
+  color: var(--text-3);
+  margin-bottom: 10px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--gb);
+}
+
+.configLine {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin-bottom: 5px;
+}
+
+.configKey {
+  font-size: 8.5px;
+  color: var(--text-3);
+  width: 56px;
+  flex-shrink: 0;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.configVal {
+  font-size: 11px;
+  color: var(--lime);
+}
+
+/* ─── RADAR MINI ─────────────────────────────────────────────────────────────── */
 .radarMini {
-  margin-top: 1.5rem;
-  opacity: 0.85;
+  margin-top: 16px;
+  opacity: 0.9;
 }
 
+/* ─── PILLS (perspective) ────────────────────────────────────────────────────── */
+.pills { display: flex; gap: 6px; }
 
-/* ── Mobile responsive ────────────────────────────────────────────────────── */
-@media (max-width: 700px) {
+.pill {
+  flex: 1;
+  padding: 7px 4px;
+  background: var(--g2);
+  border: 1px solid var(--gb);
+  border-radius: var(--radius-sm);
+  font-size: 10px;
+  font-family: var(--font-mono);
+  color: var(--text-3);
+  cursor: pointer;
+  transition: all 0.15s;
+  text-align: center;
+  letter-spacing: 0.06em;
+}
 
-  .phaseNav {
-    padding: 0 0.5rem;
-    flex-wrap: wrap;
-    gap: 2px;
-  }
+.pill:hover { border-color: var(--lime-dim); color: var(--text-2); }
 
-  .phaseTab {
-    padding: 8px 12px;
-    font-size: 10px;
-  }
+.pillActive {
+  border-color: var(--lime) !important;
+  color: var(--lime) !important;
+  background: var(--lime-glow) !important;
+}
 
-  .phaseBody {
-    padding: 1rem 0.75rem;
-  }
+/* ─── KNOBS ROW ──────────────────────────────────────────────────────────────── */
+.knobs {
+  display: flex;
+  gap: 24px;
+  justify-content: flex-start;
+  padding: 4px 0;
+}
 
-  /* Phase 3 KNOW: sliders + radar stack vertically */
-  .knowGrid {
-    grid-template-columns: 1fr;
-    gap: 1.5rem;
-  }
+/* ─── AUTO NOTE ──────────────────────────────────────────────────────────────── */
+.autoNote {
+  font-size: 9.5px;
+  color: var(--text-3);
+  font-style: italic;
+  margin-top: 6px;
+}
 
-  /* Phase 4 CRAFT: all 3 cols stack */
-  .craftGrid {
-    grid-template-columns: 1fr;
-    gap: 1.5rem;
-  }
+/* ─── HEALTH INDICATOR (Phase 1 corner) ─────────────────────────────────────── */
+.healthDot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.healthOk      { background: var(--lime); box-shadow: 0 0 6px var(--lime); }
+.healthWarn    { background: var(--amber); }
+.healthDown    { background: var(--red-hot); }
 
-  /* Phase nav buttons go full-width row */
-  .phaseNav2 {
-    flex-wrap: wrap;
-    gap: 8px;
-  }
+.healthRow {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 9px;
+  color: var(--text-3);
+  margin-bottom: 16px;
+  padding: 7px 10px;
+  background: var(--g2);
+  border: 1px solid var(--gb);
+  border-radius: var(--radius-sm);
+}
 
-  .ctaBtn,
-  .backBtn,
-  .igniteBtn {
-    flex: 1;
-    text-align: center;
-    justify-content: center;
-  }
+/* ─── ANALYZE STATUS ROW ─────────────────────────────────────────────────────── */
+.analyzeStatus {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 10px;
+  color: var(--lime-dim);
+  margin-top: 8px;
+  padding: 6px 10px;
+  background: var(--lime-glow);
+  border: 1px solid rgba(168,255,58,0.2);
+  border-radius: var(--radius-sm);
+}
 
-  .speakPhase,
-  .feelPhase {
-    max-width: 100%;
-  }
+/* ─── ENDPOINT TEST PANEL ────────────────────────────────────────────────────── */
+.testPanel {
+  position: fixed;
+  bottom: 0; right: 0;
+  width: 340px;
+  max-height: 70vh;
+  background: rgba(10,18,10,0.97);
+  border: 1px solid var(--gb);
+  border-bottom: none;
+  border-right: none;
+  border-radius: 8px 0 0 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  z-index: 500;
+  font-family: var(--font-mono);
+  font-size: 10px;
+}
+
+.testPanelHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 12px;
+  background: var(--g2);
+  border-bottom: 1px solid var(--gb);
+  cursor: pointer;
+  user-select: none;
+}
+
+.testPanelTitle {
+  font-size: 9px;
+  letter-spacing: 0.15em;
+  color: var(--lime-dim);
+  font-weight: 700;
+}
+
+.testPanelBody {
+  overflow-y: auto;
+  padding: 10px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.testRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 8px;
+  background: var(--g2);
+  border: 1px solid var(--gb);
+  border-radius: var(--radius-sm);
+  gap: 8px;
+}
+
+.testEndpoint {
+  color: var(--text-2);
+  font-size: 9px;
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.testStatus {
+  font-size: 9px;
+  padding: 2px 7px;
+  border-radius: 10px;
+  flex-shrink: 0;
+  letter-spacing: 0.04em;
+}
+
+.testOk      { background: rgba(168,255,58,0.15); color: var(--lime); border: 1px solid var(--lime-dim); }
+.testFail    { background: rgba(255,64,96,0.15);  color: var(--red-hot); border: 1px solid #ff4060; }
+.testPending { background: rgba(255,184,48,0.1);  color: var(--amber); border: 1px solid var(--amber); }
+
+.testRunBtn {
+  padding: 5px 10px;
+  background: none;
+  border: 1px solid var(--lime-dim);
+  border-radius: var(--radius-sm);
+  color: var(--lime-dim);
+  font-family: var(--font-mono);
+  font-size: 9px;
+  cursor: pointer;
+  letter-spacing: 0.08em;
+  transition: all 0.15s;
+}
+.testRunBtn:hover { background: var(--lime-glow); color: var(--lime); border-color: var(--lime); }
+
+/* ─── MOBILE ─────────────────────────────────────────────────────────────────── */
+@media (max-width: 768px) {
+  .phaseNav { padding: 0 8px; flex-wrap: wrap; }
+  .phaseTab  { padding: 8px 12px; font-size: 9px; }
+  .phaseBody { padding: 16px 12px; }
+
+  .knowGrid  { grid-template-columns: 1fr; gap: 20px; }
+  .craftGrid { grid-template-columns: 1fr; gap: 20px; }
+
+  .phaseNav2 { flex-wrap: wrap; gap: 8px; }
+  .ctaBtn, .backBtn, .igniteBtn { flex: 1; text-align: center; }
+
+  .speakPhase, .feelPhase { max-width: 100%; }
+  .testPanel { display: none; }
 }
 
 @media (max-width: 480px) {
-  .phaseTab {
-    padding: 6px 8px;
-    font-size: 9px;
-  }
-
-  .phaseN {
-    width: 14px;
-    height: 14px;
-    font-size: 8px;
-  }
+  .phaseTab { padding: 6px 8px; font-size: 8.5px; }
+  .phaseN { width: 16px; height: 16px; font-size: 8px; }
+  .panelLabel { font-size: 22px; letter-spacing: 4px; }
 }
