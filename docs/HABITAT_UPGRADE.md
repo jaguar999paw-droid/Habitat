@@ -93,14 +93,41 @@ updates in Phase 3 and shows a mini version in Phase 4's config sidebar.
 
 ---
 
+
+## Completed — Session N+1
+
+| Item | What was done |
+|---|---|
+| `InferencePreview` override modal | Real modal UI — chip click opens select panel, `onOverride(property, newValue)` propagates up |
+| Phase 2 → parser injection | `inferenceOverrides` state in Cockpit, sent to `/api/analyze`, `identityParser.js` merges them (sets confidence=1.0) |
+| `IdentityRadar` dot tooltip | SVG-native tooltip on hover — axis label + `value / 100`, bounds-clamped, pointer-events:none |
+| `PERSIST_KEY` v2 migration | `useEffect` on mount calls `localStorage.removeItem('sci_cockpit_v2')` |
+| Mobile layout | `@media (max-width: 700px)` — phase nav wraps, knowGrid/craftGrid go 1-col, buttons flex |
+
+### Override data flow
+```
+User clicks chip in InferencePreview
+  → OverrideModal opens (select from valid options)
+  → onConfirm(property, newValue) called
+  → Cockpit.handleOverride(property, newValue)
+      setInferenceOverrides({ ...prev, [property]: newValue })
+      if primary_emotion → upd({ primaryEmotion: newValue })
+      if temporal_dominant → patch analyzed state directly (radar updates)
+  → Next POST /api/analyze sends inferenceOverrides in body
+  → server.js passes to parseIdentity(answers, inferenceOverrides)
+  → identityParser merges: overridden property promoted, confidence = 1.0
+```
+
 ## Still To Do
 
-- [ ] `InferencePreview` override → modal UI (currently logs to console)
-- [ ] Phase 2 → `identityParser.js` override injection (let user corrections
-      flow back into the next `/api/analyze` call)
-- [ ] Mobile layout: Phase nav wraps, knowGrid collapses to 1-col
-- [ ] `IdentityRadar` — add tooltip on dot hover showing axis name + value
-- [ ] `PERSIST_KEY` migration: clear old `sci_cockpit_v2` on load
+*(All Phase 3 items completed this session — see below)*
+
+### Future enhancements
+- [ ] `InferencePreview` — keyboard navigation for override modal (tab/enter/esc)
+- [ ] `IdentityRadar` — touch support for tooltip on mobile (tap-to-reveal)
+- [ ] Phase 1 — word count indicator on textareas
+- [ ] Alter-ego picker in Phase 4 CRAFT (schema already supports it)
+- [ ] Re-analyze button in Phase 2 that replays `/api/analyze` with current `inferenceOverrides`
 
 ---
 
@@ -111,4 +138,5 @@ updates in Phase 3 and shows a mini version in Phase 4's config sidebar.
 | Session N-2 | Built engine layer: identitySchema, propertyTensionEngine, altEgoEngine, identityConfig |
 | Session N-1 | Built frontend components: EmotionGrid, IdentitySliders, InferencePreview |
 | Session N   | Built IdentityRadar, refactored Cockpit to 4-phase flow, wrote this doc, committed |
+| Session N+1 | Override modal (InferencePreview), radar dot tooltips, Phase 2→parser injection, PERSIST_KEY migration, mobile CSS |
 

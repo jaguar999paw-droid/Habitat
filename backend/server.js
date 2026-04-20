@@ -73,7 +73,7 @@ app.get('/api/health', async (req, res) => {
  */
 app.post('/api/analyze', async (req, res) => {
   try {
-    const { answers, overrides = {} } = req.body;
+    const { answers, overrides = {}, inferenceOverrides = {} } = req.body;
     if (!answers || Object.keys(answers).length === 0)
       return res.status(400).json({ error: 'No answers provided.' });
 
@@ -87,7 +87,7 @@ app.post('/api/analyze', async (req, res) => {
       ? analyzeReference(answers.referenceText)
       : { hasReference: false };
 
-    const parsed      = await parseIdentity(answers);
+    const parsed      = await parseIdentity(answers, inferenceOverrides);
     parsed.overrides  = overrides;
 
     const persona = buildPersona(parsed);

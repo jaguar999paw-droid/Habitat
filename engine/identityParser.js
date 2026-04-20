@@ -118,7 +118,7 @@ async function callMLService(text) {
 }
 
 // ── Master parse (async, ML-aware) ──────────────────────────────────────────
-async function parseIdentity(userInputs) {
+async function parseIdentity(userInputs, userOverrides = {}) {
   const fullText = Object.values(userInputs).join(' ');
 
   const ruleEmotions  = detectEmotions(fullText);
@@ -163,6 +163,33 @@ async function parseIdentity(userInputs) {
     traits:            traits.length >= 2 ? 0.8 : 0.4,
   };
 
+
+  // ── User overrides from Phase 2 (InferencePreview corrections) ────────────
+  // Override fields: primary_emotion, archetype, logical_relation,
+  //                  language_mix, temporal_dominant
+  if (userOverrides.primary_emotion) {
+    // Promote the overridden emotion to the front of the list
+    const overrideEmo = { emotion: userOverrides.primary_emotion, intensity: 1.0, source: 'user_override' };
+    const rest = emotions.filter(e => e.emotion !== userOverrides.primary_emotion);
+    emotions.splice(0, emotions.length, overrideEmo, ...rest);
+    propertyConfidence.primary_emotion = 1.0;
+  }
+  if (userOverrides.archetype) {
+    const overrideConflict = { type: userOverrides.archetype, score: 1.0, source: 'user_override' };
+    const rest = conflicts.filter(c => c.type !== userOverrides.archetype);
+    conflicts.splice(0, conflicts.length, overrideConflict, ...rest);
+    propertyConfidence.dominant_conflict = 1.0;
+  }
+  if (userOverrides.logical_relation && temporalProfile?.logicalRelation) {
+    temporalProfile.logicalRelation.relation   = userOverrides.logical_relation;
+    temporalProfile.logicalRelation.confidence = 1.0;
+    propertyConfidence.logical_relation        = 1.0;
+  }
+  if (userOverrides.temporal_dominant && temporalProfile?.temporal) {
+    temporalProfile.temporal.dominant = userOverrides.temporal_dominant;
+    propertyConfidence.temporal_dominant = 1.0;
+  }
+
   return {
     rawInputs: userInputs, emotions, conflicts, traits, languageMix,
     wordCount: fullText.split(/\s+/).length,
@@ -175,11 +202,18 @@ async function parseIdentity(userInputs) {
 }
 
 // Synchronous fallback (rule-based only)
-function parseIdentitySync(userInputs) {
+function parseIdentitySync(userInputs, userOverrides = {}) {
   const fullText = Object.values(userInputs).join(' ');
   const ruEm = detectEmotions(fullText);
   const ruCo = detectConflicts(fullText);
   const temporalProfile = parseTemporalIdentity(userInputs, ruEm, ruCo);
+  // Apply user overrides (sync path)
+  if (userOverrides.primary_emotion) {
+    const ov = { emotion: userOverrides.primary_emotion, intensity: 1.0, source: 'user_override' };
+    const rest = ruEm.filter(e => e.emotion !== userOverrides.primary_emotion);
+    ruEm.splice(0, ruEm.length, ov, ...rest);
+  }
+
   return {
     rawInputs: userInputs,
     emotions:  ruEm,

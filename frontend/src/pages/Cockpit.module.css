@@ -339,3 +339,66 @@
   opacity: 0.85;
 }
 
+
+/* ── Mobile responsive ────────────────────────────────────────────────────── */
+@media (max-width: 700px) {
+
+  .phaseNav {
+    padding: 0 0.5rem;
+    flex-wrap: wrap;
+    gap: 2px;
+  }
+
+  .phaseTab {
+    padding: 8px 12px;
+    font-size: 10px;
+  }
+
+  .phaseBody {
+    padding: 1rem 0.75rem;
+  }
+
+  /* Phase 3 KNOW: sliders + radar stack vertically */
+  .knowGrid {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
+
+  /* Phase 4 CRAFT: all 3 cols stack */
+  .craftGrid {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
+
+  /* Phase nav buttons go full-width row */
+  .phaseNav2 {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .ctaBtn,
+  .backBtn,
+  .igniteBtn {
+    flex: 1;
+    text-align: center;
+    justify-content: center;
+  }
+
+  .speakPhase,
+  .feelPhase {
+    max-width: 100%;
+  }
+}
+
+@media (max-width: 480px) {
+  .phaseTab {
+    padding: 6px 8px;
+    font-size: 9px;
+  }
+
+  .phaseN {
+    width: 14px;
+    height: 14px;
+    font-size: 8px;
+  }
+}

@@ -105,6 +105,8 @@ export default function Cockpit({ onDone }) {
     } catch { return defaultState() }
   })
   const [analyzing, setAnalyzing]   = useState(false)
+  // Corrections the user made in Phase 2 via InferencePreview override modal
+  const [inferenceOverrides, setInferenceOverrides] = useState({})
   const [analyzed,  setAnalyzed]    = useState(null)   // raw /api/analyze response
   const [analyzeError, setAnalyzeError] = useState(null)
   const [igniting,  setIgniting]    = useState(false)
@@ -116,6 +118,11 @@ export default function Cockpit({ onDone }) {
     }, 2000)
     return () => clearTimeout(id)
   }, [s])
+
+  // PERSIST_KEY migration: clear stale v2 key on first load
+  useEffect(() => {
+    try { localStorage.removeItem('sci_cockpit_v2') } catch {}
+  }, [])
 
   const upd = useCallback((patch) => setS(prev => ({ ...prev, ...patch })), [])
 
@@ -135,6 +142,7 @@ export default function Cockpit({ onDone }) {
             socialConflict: s.socialConflict,
             referenceText:  s.referenceText,
           },
+          inferenceOverrides,
         }),
       })
       if (!res.ok) throw new Error(`Server error ${res.status}`)
@@ -184,10 +192,31 @@ export default function Cockpit({ onDone }) {
     }, 700)
   }
 
-  // Shared overrides for InferencePreview
-  function handleOverride(property) {
-    // For now, overrides surface a console note; a future modal can handle them
-    console.info('[SCI] Override requested:', property)
+  // Called by InferencePreview when the user confirms an override in the modal.
+  // Merges into inferenceOverrides — sent to /api/analyze on the next call.
+  // Also immediately updates local state where a direct UI mapping exists.
+  function handleOverride(property, newValue) {
+    setInferenceOverrides(prev => ({ ...prev, [property]: newValue }))
+    // Mirror into local state where the UI already has a matching field
+    if (property === 'primary_emotion' && newValue) {
+      upd({ primaryEmotion: newValue })
+    }
+    if (property === 'temporal_dominant') {
+      // Re-trigger analyze with the correction baked in so the radar updates
+      setAnalyzed(prev => {
+        if (!prev?.parsed?.temporalProfile?.temporal) return prev
+        return {
+          ...prev,
+          parsed: {
+            ...prev.parsed,
+            temporalProfile: {
+              ...prev.parsed.temporalProfile,
+              temporal: { ...prev.parsed.temporalProfile.temporal, dominant: newValue }
+            }
+          }
+        }
+      })
+    }
   }
 
   const radarValues = buildRadarValues(analyzed?.parsed, s.identitySliders)
