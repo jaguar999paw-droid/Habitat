@@ -9,6 +9,7 @@
  */
 import { useState } from 'react'
 import GlitchText from '../components/GlitchText'
+import HookBookPanel from '../components/HookBookPanel'
 import styles from './SongDisplay.module.css'
 
 const SECTION_COLORS = {
@@ -28,6 +29,7 @@ export default function SongDisplay({ song, analysis, onRestart }) {
   const [sections,    setSections]     = useState(song.sections)
   const [regenerating,setRegenerating] = useState({})
   const [seedMap,     setSeedMap]      = useState({})
+  const [hookOpen,    setHookOpen]    = useState(false)
 
   // ── Per-section regenerate ────────────────────────────────────────────────
   async function regenerateSection(idx) {
@@ -219,6 +221,22 @@ export default function SongDisplay({ song, analysis, onRestart }) {
           <span className={styles.footerLine} />
         </div>
       </div>
+
+      {/* ── HookBook FAB ──────────────────────────────────────────────────── */}
+      <button
+        className={styles.hookFab}
+        onClick={() => setHookOpen(true)}
+        title="Open HookBook — lyric analysis"
+      >
+        ⊕ HOOKBOOK
+      </button>
+
+      {/* ── HookBook Drawer ───────────────────────────────────────────────── */}
+      <HookBookPanel
+        open={hookOpen}
+        onClose={() => setHookOpen(false)}
+        sections={sections}
+      />
     </div>
   )
 }
