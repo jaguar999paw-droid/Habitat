@@ -310,13 +310,34 @@ export default function Cockpit({ onDone, preFill }) {
         mainIdea: s.mainIdea, emotionalTruth: s.emotionalTruth,
         socialConflict: s.socialConflict, referenceText: s.referenceText,
         overrides: {
-          rawness: s.identitySliders.rawness, energyValue: s.energy,
-          rhymeScheme: s.rhymeScheme, perspective: s.perspective,
-          languageMix: s.languageMix, archetype: s.archetype,
-          subThemes: s.subThemes, primaryEmotion: s.primaryEmotion,
-          secondaryEmotions: s.secondaryEmotions, identitySliders: s.identitySliders,
-          alterEgo: s.alterEgo,
-          identityConfig: { activeAlterEgo: s.alterEgo },
+          // ── Direct overrides (server normalizes '1st'→'first' etc.) ──────────
+          rawness:          s.identitySliders.rawness,
+          energyValue:      s.energy,
+          rhymeScheme:      s.rhymeScheme,
+          perspective:      s.perspective,         // '1st'|'2nd'|'3rd' — server normalizes
+          languageMix:      s.languageMix,         // ['en','sw','sheng'] array — server maps
+          archetype:        s.archetype,            // 'The Defiant' etc. or null
+          subThemes:        s.subThemes,
+          primaryEmotion:   s.primaryEmotion,
+          secondaryEmotions:s.secondaryEmotions,
+          alterEgo:         s.alterEgo,
+          identityConfig:   { activeAlterEgo: s.alterEgo },
+          identitySliders:  s.identitySliders,
+          // ── Craft object: maps Phase 4 settings → styleMapper craftConfig ────
+          craft: {
+            rawness:           s.identitySliders.rawness,
+            vulnerabilityModifier: s.identitySliders.vulnerability_level,
+            decisiveness:      s.identitySliders.decisiveness,
+            attribution:       s.identitySliders.attribution,
+            rhetoricalDevices: [],  // populated when craft controls added
+            dictionLevel:      'natural',
+            meter:             'free',
+            momentum:          'sustain',
+            resolution:        'ambiguous',
+            narratorMorality:  'morally_grey',
+            humorType:         'none',
+            humorIntensity:    0,
+          },
         },
         analyzed: analyzed || null,
       })

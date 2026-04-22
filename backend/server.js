@@ -77,8 +77,17 @@ app.post('/api/analyze', async (req, res) => {
     if (!answers || Object.keys(answers).length === 0)
       return res.status(400).json({ error: 'No answers provided.' });
 
-    // Schema validation
-    const schemaCheck = validateOverrides(overrides);
+    // ── Normalize overrides: map UI shorthand → schema canonical values ──────────
+    const PERSPECTIVE_MAP = { '1st': 'first', '2nd': 'second', '3rd': 'third' };
+    let normalizedOverrides = { ...overrides };
+    if (normalizedOverrides.perspective && PERSPECTIVE_MAP[normalizedOverrides.perspective]) {
+      normalizedOverrides = { ...normalizedOverrides, perspective: PERSPECTIVE_MAP[normalizedOverrides.perspective] };
+    }
+    // Alias back so rest of handler uses normalized copy
+    const ov = normalizedOverrides;
+
+    // Schema validation (after normalization)
+    const schemaCheck = validateOverrides(ov);
     if (!schemaCheck.valid) {
       return res.status(400).json({ error: 'Schema validation failed', schemaErrors: schemaCheck.errors });
     }
@@ -88,37 +97,47 @@ app.post('/api/analyze', async (req, res) => {
       : { hasReference: false };
 
     const parsed      = await parseIdentity(answers, inferenceOverrides);
-    parsed.overrides  = overrides;
+    parsed.overrides  = ov;
 
     const persona = buildPersona(parsed);
-    if (overrides.energyValue !== undefined) persona.energyValue = overrides.energyValue;
+    // ── Apply all cockpit ov to persona ────────────────────────────────
+    if (ov.energyValue  !== undefined) persona.energyValue  = ov.energyValue;
+    if (ov.archetype    !== undefined && ov.archetype !== null) persona.archetype = ov.archetype;
+    if (ov.perspective  !== undefined) persona.perspective  = ov.perspective;
+    if (ov.primaryEmotion !== undefined && ov.primaryEmotion !== null) persona.primaryEmotion = ov.primaryEmotion;
+    if (ov.languageMix  !== undefined && Array.isArray(ov.languageMix)) {
+      // Map array ['en','sw','sheng'] → persona.languageMix string for styleMapper
+      const LANG_LABELS = { en: 'English', sw: 'Kiswahili', sheng: 'Sheng' };
+      const labels = ov.languageMix.map(l => LANG_LABELS[l] || l);
+      persona.languageMix = labels.join(' + ');
+    }
 
     const message   = extractMessage(parsed);
 
     // v3: inject identityConfig into message so promptBuilder can access it
-    if (overrides.identityConfig) message.identityConfig = overrides.identityConfig;
+    if (ov.identityConfig) message.identityConfig = ov.identityConfig;
 
     const structure = planStructure(persona, message);
 
-    // v3: pass craft + identityConfig overrides into mapStyle → style.craftConfig / style.identityConfig
+    // v3: pass craft + identityConfig ov into mapStyle → style.craftConfig / style.identityConfig
     const style = mapStyle(persona, {
-      rawness:        overrides.rawness,
-      rhymeScheme:    overrides.rhymeScheme || referenceProfile.rhymeScheme,
-      craft:          overrides.craft          || {},
-      identityConfig: overrides.identityConfig || null,
+      rawness:        ov.rawness,
+      rhymeScheme:    ov.rhymeScheme || referenceProfile.rhymeScheme,
+      craft:          ov.craft          || {},
+      identityConfig: ov.identityConfig || null,
     });
 
     // Cross-property tension detection
-    const propertyTensions = detectPropertyTensions(overrides, parsed);
-    const enhancedCraft    = applyTensionsToCraft(overrides.craft || {}, propertyTensions);
+    const propertyTensions = detectPropertyTensions(ov, parsed);
+    const enhancedCraft    = applyTensionsToCraft(ov.craft || {}, propertyTensions);
     const tensionSummary   = buildTensionSummary(propertyTensions);
 
     // Re-apply style with tension-enhanced craft
     const finalStyle = mapStyle(persona, {
-      rawness:        overrides.rawness,
-      rhymeScheme:    overrides.rhymeScheme || referenceProfile.rhymeScheme,
+      rawness:        ov.rawness,
+      rhymeScheme:    ov.rhymeScheme || referenceProfile.rhymeScheme,
       craft:          enhancedCraft,
-      identityConfig: overrides.identityConfig || null,
+      identityConfig: ov.identityConfig || null,
     });
 
     res.json({
