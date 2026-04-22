@@ -157,10 +157,10 @@ app.post('/api/analyze', async (req, res) => {
 // ── Generate Full Song ────────────────────────────────────────────────────────
 app.post('/api/generate', async (req, res) => {
   try {
-    const { persona, message, structure, style, apiKey, provider = 'claude' } = req.body;
+    const { persona, message, structure, style, apiKey, provider = 'claude', model } = req.body;
     if (!apiKey) return res.status(400).json({ error: 'API key is required.' });
 
-    const sections  = await generateFullSong({ structure, persona, message, style, apiKey, provider });
+    const sections  = await generateFullSong({ structure, persona, message, style, apiKey, provider, model });
     const formatted = formatSong(sections);
 
     res.json({
@@ -176,14 +176,14 @@ app.post('/api/generate', async (req, res) => {
 // ── Generate / Regenerate Single Section ─────────────────────────────────────
 app.post('/api/section', async (req, res) => {
   try {
-    const { section, persona, message, style, previousSections = [], apiKey, provider = 'claude', seed = 0 } = req.body;
+    const { section, persona, message, style, previousSections = [], apiKey, provider = 'claude', model, seed = 0 } = req.body;
     if (!apiKey) return res.status(400).json({ error: 'API key is required.' });
 
     const styleWithSeed = seed > 0
       ? { ...style, seedHint: `Variation ${seed} — use a different angle, metaphor, or opening line.` }
       : style;
 
-    const generated = await generateSection({ section, persona, message, style: styleWithSeed, previousSections, apiKey, provider });
+    const generated = await generateSection({ section, persona, message, style: styleWithSeed, previousSections, apiKey, provider, model });
     res.json({ success: true, section: generated });
   } catch (err) {
     console.error('Section generation error:', err);

@@ -234,3 +234,33 @@
   opacity: 0.35;
   animation: wave1 1.2s ease-in-out infinite alternate;
 }
+
+/* ── Model selector ─────────────────────────────────────────────────────────── */
+.modelRow {
+  display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+  padding: 10px 0 4px;
+  border-top: 1px solid var(--grey-dark, #1e1e2e);
+  margin-top: 8px;
+}
+.modelLabel {
+  font-family: var(--font-mono, 'Space Mono', monospace);
+  font-size: 8px; letter-spacing: 2px; text-transform: uppercase;
+  color: var(--text-muted, #555); margin-right: 4px; flex-shrink: 0;
+}
+.modelBtn {
+  background: none; border: 1px solid var(--grey-dark, #1e1e2e);
+  border-radius: 6px; padding: 6px 12px; cursor: pointer;
+  display: flex; flex-direction: column; gap: 1px; text-align: left;
+  transition: all 0.15s;
+}
+.modelBtn:hover { border-color: var(--green-dim, #00bb66); }
+.modelActive { border-color: var(--green, #00ff88) !important; background: rgba(0,255,136,0.06) !important; }
+.modelName {
+  font-family: var(--font-mono, 'Space Mono', monospace);
+  font-size: 10px; color: var(--text-dim, #aaa); letter-spacing: 0.5px;
+}
+.modelActive .modelName { color: var(--green, #00ff88); }
+.modelSub {
+  font-family: var(--font-mono, 'Space Mono', monospace);
+  font-size: 8px; color: var(--text-muted, #555);
+}

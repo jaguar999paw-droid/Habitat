@@ -31,7 +31,7 @@ const PARTICLE_DATA = Array.from({ length: 32 }, (_, i) => ({
 
 const PIPELINE = ['Identity', 'Persona', 'Message', 'Structure', 'Song']
 
-export default function Landing({ onStart, apiKey, onSaveApiKey, provider, onSetProvider }) {
+export default function Landing({ onStart, apiKey, onSaveApiKey, provider, onSetProvider, model, onSetModel }) {
   const [keyInput,  setKeyInput]  = useState(apiKey)
   const [showKey,   setShowKey]   = useState(false)
   const [igniting,  setIgniting]  = useState(false)
@@ -140,6 +140,27 @@ export default function Landing({ onStart, apiKey, onSaveApiKey, provider, onSet
             ))}
           </div>
 
+          {/* Claude model selector */}
+          {provider === 'claude' && (
+            <div className={styles.modelRow}>
+              <span className={styles.modelLabel}>MODEL</span>
+              {[
+                { id: 'claude-sonnet-4-6',         label: 'Sonnet 4.6',  sub: 'recommended' },
+                { id: 'claude-haiku-4-5-20251001',  label: 'Haiku 4.5',   sub: 'fastest / cheapest' },
+                { id: 'claude-opus-4-6',            label: 'Opus 4.6',    sub: 'Pro tier only' },
+              ].map(m => (
+                <button
+                  key={m.id}
+                  className={[styles.modelBtn, model === m.id ? styles.modelActive : ''].join(' ')}
+                  onClick={() => onSetModel(m.id)}
+                >
+                  <span className={styles.modelName}>{m.label}</span>
+                  <span className={styles.modelSub}>{m.sub}</span>
+                </button>
+              ))}
+            </div>
+          )}
+
           {/* Key input */}
           <div className={styles.keySection}>
             <label className={styles.keyLabel}>
@@ -162,7 +183,7 @@ export default function Landing({ onStart, apiKey, onSaveApiKey, provider, onSet
                 {showKey ? '◉' : '○'}
               </button>
             </div>
-            <p className={styles.keyNote}>Stored locally in your browser only — never transmitted to our servers.</p>
+            <p className={styles.keyNote}>Stored in your browser. Sent to the local backend (localhost:3001) which calls the AI API — never leaves your machine.</p>
           </div>
         </div>
 

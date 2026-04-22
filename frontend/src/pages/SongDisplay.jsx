@@ -23,7 +23,7 @@ const SECTION_COLORS = {
   'call-and-response':'var(--green)',
 }
 
-export default function SongDisplay({ song, analysis, onRestart }) {
+export default function SongDisplay({ song, analysis, model, onRestart }) {
   const [copied,      setCopied]       = useState(false)
   const [view,        setView]         = useState('sections')
   const [sections,    setSections]     = useState(song.sections)
@@ -51,7 +51,7 @@ export default function SongDisplay({ song, analysis, onRestart }) {
           message:          analysis?.message,
           style:            analysis?.style,
           previousSections: sections.slice(0, idx).map(s => s.lyrics),
-          apiKey, provider, seed: newSeed,
+          apiKey, provider, model, seed: newSeed,
         }),
       })
       const data = await res.json()

@@ -27,6 +27,7 @@ export default function App() {
   const [song,          setSong]          = useState(null)
   const [apiKey,        setApiKey]        = useState(localStorage.getItem('sci_api_key') || '')
   const [provider,      setProvider]      = useState(localStorage.getItem('sci_provider') || 'claude')
+  const [model,         setModel]         = useState(localStorage.getItem('sci_model') || 'claude-sonnet-4-6')
   const [journalFill,   setJournalFill]   = useState(null)   // from JournalPage synthesis
   const [hookOverrides, setHookOverrides] = useState(null)   // from HookWorksheet
 
@@ -42,6 +43,9 @@ export default function App() {
   }
   function saveProvider(p) {
     setProvider(p); localStorage.setItem('sci_provider', p)
+  }
+  function saveModel(m) {
+    setModel(m); localStorage.setItem('sci_model', m)
   }
 
   // ── Step handlers ───────────────────────────────────────────────────────
@@ -87,6 +91,8 @@ export default function App() {
           onSaveApiKey={saveApiKey}
           provider={provider}
           onSetProvider={saveProvider}
+          model={model}
+          onSetModel={saveModel}
         />
       )}
       {step === 1 && (
@@ -116,6 +122,7 @@ export default function App() {
           analysis={analysis}
           apiKey={apiKey}
           provider={provider}
+          model={model}
           onDone={handleSongDone}
         />
       )}
@@ -123,6 +130,7 @@ export default function App() {
         <SongDisplay
           song={song}
           analysis={analysis}
+          model={model}
           onRestart={restart}
         />
       )}

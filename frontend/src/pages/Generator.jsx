@@ -20,7 +20,7 @@ const SECTION_COLORS = {
   'call-and-response':'var(--green)',
 }
 
-export default function Generator({ analysis, apiKey, provider, onDone }) {
+export default function Generator({ analysis, apiKey, provider, model, onDone }) {
   const { persona, message, structure, style } = analysis
   const [sections,   setSections]   = useState([])
   const [currentIdx, setCurrentIdx] = useState(0)
@@ -53,7 +53,7 @@ export default function Generator({ analysis, apiKey, provider, onDone }) {
             section:          allSections[i],
             persona, message, style,
             previousSections: previousRef.current,
-            apiKey, provider,
+            apiKey, provider, model,
           }),
         })
         if (!res.ok) {
