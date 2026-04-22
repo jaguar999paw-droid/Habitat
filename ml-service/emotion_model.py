@@ -4,6 +4,7 @@ Semantic emotion detection using sentence-transformers + cosine similarity.
 Model: paraphrase-MiniLM-L6-v2 (80MB, CPU-friendly, fits 3.8GB RAM)
 """
 from sentence_transformers import SentenceTransformer, util
+from text_normalizer import normalize_text
 
 # Singleton — loaded once at startup, reused for all requests
 _model = None
@@ -30,6 +31,7 @@ def detect_emotions(text: str) -> list:
     Returns list of {emotion, score} sorted by score descending.
     """
     model = get_model()
+    text = normalize_text(text)  # Normalize Unicode characters before encoding
     text_emb = model.encode(text, convert_to_tensor=True)
     scores = {}
     for emotion, anchor in EMOTION_ANCHORS.items():

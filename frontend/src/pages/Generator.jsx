@@ -190,7 +190,22 @@ export default function Generator({ analysis, apiKey, provider, model, onDone })
           <div className={styles.error}>
             <strong>Generation failed:</strong> {error}
             <p className={styles.errorHint}>
-              Verify your API key and that the backend is running on port 3001.
+              {error && error.includes('API key') ? (
+                <>
+                  <strong>API Key Issues:</strong><br/>
+                  • Verify the API key from your <a href="https://console.anthropic.com/account/keys" target="_blank" rel="noopener noreferrer">Anthropic dashboard</a><br/>
+                  • Make sure you copied the entire key (should be 20+ characters)<br/>
+                  • Check if your API key has been revoked or expired<br/>
+                  • Verify your account has the correct tier for the selected model<br/>
+                  • Backend must be running on port 3001
+                </>
+              ) : (
+                <>
+                  • Check that the backend is running on port 3001<br/>
+                  • Verify your API key from the Landing screen<br/>
+                  • Check browser console for additional error details (F12)
+                </>
+              )}
             </p>
           </div>
         )}

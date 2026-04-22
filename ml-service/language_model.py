@@ -3,6 +3,8 @@ language_model.py — SCI ML Service
 Language detection layering langdetect (EN/SW) + custom Sheng wordlist.
 langdetect alone cannot detect Sheng — we overlay a 44-word Sheng lexicon.
 """
+from text_normalizer import normalize_text
+
 try:
     from langdetect import detect as langdetect_detect
     LANGDETECT_AVAILABLE = True
@@ -25,6 +27,7 @@ def detect_language(text: str) -> dict:
       1. Run langdetect for EN/SW baseline
       2. Count Sheng words — if ≥ 3 found, flag sheng: true with high confidence
     """
+    text = normalize_text(text)  # Normalize Unicode characters before processing
     lower = text.lower()
     sheng_hits = [w for w in SHENG_LEXICON if w in lower]
     sheng_detected = len(sheng_hits) >= 3

@@ -4,6 +4,7 @@ Conflict classification using sentence embedding cosine similarity.
 """
 from emotion_model import get_model
 from sentence_transformers import util
+from text_normalizer import normalize_text
 
 CONFLICT_ANCHORS = {
     'identity_rejection': 'I am not what they say I am. I refuse their definition of me.',
@@ -21,6 +22,7 @@ def classify_conflicts(text: str) -> dict:
     Returns dict of {conflict_type: probability} sorted by value descending.
     """
     model = get_model()
+    text = normalize_text(text)  # Normalize Unicode characters before encoding
     text_emb = model.encode(text, convert_to_tensor=True)
     scores = {}
     for conflict, anchor in CONFLICT_ANCHORS.items():

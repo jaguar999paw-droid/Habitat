@@ -30,13 +30,25 @@ const CLAUDE_MODELS = {
 const DEFAULT_CLAUDE_MODEL = 'claude-sonnet-4-6';
 
 async function callClaude(systemPrompt, userPrompt, apiKey, model) {
+  // Validate API key before making request
+  if (!apiKey || typeof apiKey !== 'string') {
+    throw new Error('API key is missing or invalid. Please enter a valid Anthropic API key on the Landing screen.');
+  }
+  
+  const trimmedKey = apiKey.trim();
+  if (trimmedKey.length < 20) {
+    throw new Error('API key appears too short. Please verify you copied the full key from your Anthropic dashboard.');
+  }
+
   const resolvedModel = model || DEFAULT_CLAUDE_MODEL;
+
+  console.log(`[Claude] Calling ${resolvedModel} with API key: ${trimmedKey.substring(0, 8)}...`);
 
   const response = await fetch('https://api.anthropic.com/v1/messages', {
     method: 'POST',
     headers: {
       'Content-Type':      'application/json',
-      'x-api-key':         apiKey,
+      'x-api-key':         trimmedKey,
       'anthropic-version': '2023-06-01',
     },
     body: JSON.stringify({
@@ -48,29 +60,55 @@ async function callClaude(systemPrompt, userPrompt, apiKey, model) {
   });
 
   if (!response.ok) {
-    const err = await response.json().catch(() => ({}));
-    const msg = err.error?.message || response.statusText;
+    let err = {};
+    let errorText = '';
+    
+    try {
+      err = await response.json();
+      errorText = JSON.stringify(err, null, 2);
+    } catch (e) {
+      errorText = await response.text();
+    }
+
+    console.error(`[Claude] API Error (${response.status}):`, errorText);
+
+    const msg = err.error?.message || response.statusText || errorText;
     const type = err.error?.type || '';
 
     // Give actionable error messages
-    if (type === 'authentication_error' || msg.includes('invalid x-api-key')) {
-      throw new Error('Invalid API key — check the key you entered on the Landing screen.');
+    if (response.status === 401 || type === 'authentication_error' || msg.includes('invalid api key') || msg.includes('401')) {
+      throw new Error(`API Authentication Failed: Check your API key. If the key is correct, it may be expired or revoked. Visit https://console.anthropic.com/account/keys`);
     }
-    if (type === 'permission_error' || msg.includes('access') || msg.includes('not found')) {
-      throw new Error(`Model "${resolvedModel}" not available on your API tier. Try claude-sonnet-4-6 or claude-haiku-4-5-20251001 instead.`);
+    if (response.status === 403 || type === 'permission_error' || msg.includes('access') || msg.includes('permission')) {
+      throw new Error(`Access Denied: Your API key doesn't have permission to use "${resolvedModel}". Check your Anthropic account tier or try a different model.`);
     }
-    if (type === 'overloaded_error') {
-      throw new Error('Anthropic API is overloaded. Wait a moment and try again.');
+    if (response.status === 404 || msg.includes('not found')) {
+      throw new Error(`Model "${resolvedModel}" not found. Try "claude-sonnet-4-6" or "claude-haiku-4-5-20251001" instead.`);
+    }
+    if (type === 'overloaded_error' || response.status === 529) {
+      throw new Error('Anthropic API is temporarily overloaded. Wait a moment and try again.');
     }
     if (response.status === 429) {
-      throw new Error('Rate limit hit. Wait a few seconds, then retry.');
+      throw new Error('Rate limit exceeded. You are making requests too quickly. Wait a few seconds and try again.');
+    }
+    if (response.status === 500 || response.status === 502 || response.status === 503) {
+      throw new Error(`Anthropic API server error (${response.status}). Try again in a moment.`);
     }
     throw new Error(`Claude API error (${response.status}): ${msg}`);
   }
 
   const data = await response.json();
-  const text = data.content?.[0]?.text?.trim() || '';
-  if (!text) throw new Error('Claude returned an empty response. Try regenerating.');
+  
+  if (!data.content || data.content.length === 0) {
+    throw new Error('Claude returned an empty response. Try regenerating the section.');
+  }
+  
+  const text = data.content[0]?.text?.trim() || '';
+  if (!text) {
+    throw new Error('Claude returned a response with no text content. Try regenerating.');
+  }
+  
+  console.log(`[Claude] Successfully generated ${text.length} characters`);
   return text;
 }
 

@@ -142,22 +142,31 @@ export default function Landing({ onStart, apiKey, onSaveApiKey, provider, onSet
 
           {/* Claude model selector */}
           {provider === 'claude' && (
-            <div className={styles.modelRow}>
-              <span className={styles.modelLabel}>MODEL</span>
-              {[
-                { id: 'claude-sonnet-4-6',         label: 'Sonnet 4.6',  sub: 'recommended' },
-                { id: 'claude-haiku-4-5-20251001',  label: 'Haiku 4.5',   sub: 'fastest / cheapest' },
-                { id: 'claude-opus-4-6',            label: 'Opus 4.6',    sub: 'Pro tier only' },
-              ].map(m => (
-                <button
-                  key={m.id}
-                  className={[styles.modelBtn, model === m.id ? styles.modelActive : ''].join(' ')}
-                  onClick={() => onSetModel(m.id)}
-                >
-                  <span className={styles.modelName}>{m.label}</span>
-                  <span className={styles.modelSub}>{m.sub}</span>
-                </button>
-              ))}
+            <div>
+              <div className={styles.modelRow}>
+                <span className={styles.modelLabel}>MODEL</span>
+                {[
+                  { id: 'claude-sonnet-4-6',         label: 'Sonnet 4.6',  sub: 'recommended' },
+                  { id: 'claude-haiku-4-5-20251001',  label: 'Haiku 4.5',   sub: 'fastest / cheapest' },
+                  { id: 'claude-opus-4-6',            label: 'Opus 4.6',    sub: 'Pro tier only' },
+                ].map(m => (
+                  <button
+                    key={m.id}
+                    className={[styles.modelBtn, model === m.id ? styles.modelActive : ''].join(' ')}
+                    onClick={() => onSetModel(m.id)}
+                  >
+                    <span className={styles.modelName}>{m.label}</span>
+                    <span className={styles.modelSub}>{m.sub}</span>
+                  </button>
+                ))}
+              </div>
+              <p className={styles.modelNote}>
+                <strong>Getting "Access Denied"?</strong> Your account tier doesn't support {model}. 
+                Try <strong>Haiku 4.5</strong> for free accounts, or upgrade at{' '}
+                <a href="https://console.anthropic.com/account/billing" target="_blank" rel="noopener noreferrer">anthropic.com/account</a>
+              </p>
+            </div>
+          )}
             </div>
           )}
 

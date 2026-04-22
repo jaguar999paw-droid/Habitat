@@ -13,6 +13,7 @@ const { getTensionWeight }       = require('../engine/temporalParser');
 const { buildCraftBlock }        = require('../engine/lyricsStyleEngine');
 const { buildIdentityFrameBlock }= require('../engine/identityConfig');
 const { buildAlterEgoBlock }     = require('../engine/altEgoEngine');
+const { buildDualityBlock }      = require('../engine/dualityEngine');
 
 const SYSTEM_PROMPT = `You are SCI — Structured Creative Intelligence — a disciplined AI songwriting engine.
 
@@ -36,7 +37,14 @@ The user does not need to have lived a chaotic life to write an extraordinary so
 Every ordinary life, when examined through the 6 angles of identity
 (who I was / could have been / am / can become / will be / might become),
 contains the material for an extraordinary song.
-Your job is to transform that material into structured music.`;
+Your job is to transform that material into structured music.
+
+DUALITY PRINCIPLE:
+Every truth the song states carries a shadow truth it refuses to state.
+Every "I am" contains an "I am not".
+Every "why" carries a "why not".
+The most powerful songs hold both truths simultaneously — they do not resolve the tension,
+they BECOME it. Write into the tension, not out of it.`;
 
 function buildSectionPrompt(section, persona, message, style, previousSections = []) {
   let contextBlock = '';
@@ -56,6 +64,9 @@ function buildSectionPrompt(section, persona, message, style, previousSections =
   const craftBlock     = buildCraftBlock(craftConfig, section.type);
   const alterEgoBlock  = (message.identityConfig && message.identityConfig.activeAlterEgo)
     ? buildAlterEgoBlock(message.identityConfig.activeAlterEgo)
+    : '';
+  const dualityBlock   = message.dualityAnalysis
+    ? buildDualityBlock(message.dualityAnalysis, section)
     : '';
 
   const tw = getTensionWeight(section.type);
@@ -97,7 +108,7 @@ Lines:         approximately ${section.lines}
 Hook Style:    ${section.type === 'hook' ? style.hookStyle : 'N/A'}
 Bridge Style:  ${section.type === 'bridge' ? style.bridgeStyle : 'N/A'}
 Tension:       ${tensionLabel}
-${temporalBlock}${identityBlock}${craftBlock}${alterEgoBlock}${contextBlock}
+${temporalBlock}${identityBlock}${craftBlock}${alterEgoBlock}${dualityBlock}${contextBlock}
 
 Now write ONLY this ${section.type.toUpperCase()} section. Lyrics only. No labels. No commentary.
 `.trim();

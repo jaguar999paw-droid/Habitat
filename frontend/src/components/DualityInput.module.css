@@ -1,0 +1,42 @@
+.container { display: flex; flex-direction: column; gap: 6px; margin-bottom: 16px; }
+.header { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.label { font-size: 9px; letter-spacing: 0.12em; color: var(--text-2); font-weight: 600; text-transform: uppercase; }
+.required { color: var(--lime); margin-left: 2px; }
+.hint { font-size: 9px; color: var(--text-3); margin-left: auto; }
+.shadowToggle {
+  font-size: 9px; letter-spacing: 0.08em; padding: 2px 7px; border-radius: 3px;
+  border: 1px solid var(--border); background: transparent; color: var(--text-3);
+  cursor: pointer; transition: all 0.15s; margin-left: auto;
+}
+.shadowToggle:hover { border-color: var(--magenta); color: var(--magenta); }
+.shadowToggleActive { border-color: var(--magenta) !important; color: var(--magenta) !important; background: color-mix(in srgb, var(--magenta) 8%, transparent) !important; }
+
+.fields { display: flex; flex-direction: column; gap: 8px; }
+.fieldsDual { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+@media (max-width: 640px) { .fieldsDual { grid-template-columns: 1fr; } }
+
+.fieldWrap { display: flex; flex-direction: column; gap: 4px; position: relative; }
+.fieldTag { font-size: 8px; letter-spacing: 0.1em; color: var(--lime); text-transform: uppercase; font-weight: 600; }
+.shadowField .fieldTag { color: var(--magenta); }
+.shadowHintText { font-size: 9px; color: var(--text-3); font-style: italic; }
+
+.textarea {
+  background: var(--surface-2); border: 1px solid var(--border);
+  color: var(--text-1); font-size: 13px; line-height: 1.6;
+  padding: 10px 12px; border-radius: 4px; resize: vertical;
+  font-family: inherit; transition: border-color 0.15s;
+  width: 100%; box-sizing: border-box;
+}
+.textarea:focus { outline: none; border-color: var(--lime); }
+.textarea::placeholder { color: var(--text-3); font-size: 12px; }
+
+.textareaMagenta:focus { border-color: var(--magenta); }
+.textareaShadow { border-color: color-mix(in srgb, var(--magenta) 40%, var(--border)); }
+.textareaShadow:focus { border-color: var(--magenta); }
+
+.wordCount {
+  position: absolute; bottom: 8px; right: 10px;
+  font-size: 9px; color: var(--text-3);
+  background: var(--surface-2); padding: 1px 4px;
+  pointer-events: none;
+}

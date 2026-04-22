@@ -4,6 +4,7 @@ Trait scoring using semantic similarity to archetype descriptions.
 """
 from emotion_model import get_model
 from sentence_transformers import util
+from text_normalizer import normalize_text
 
 TRAIT_ANCHORS = {
     'introspective': 'I think deeply about everything. I reflect on my inner world and question my feelings.',
@@ -19,6 +20,7 @@ def score_traits(text: str) -> dict:
     Returns dict of {trait: score} — higher score = stronger trait presence.
     """
     model = get_model()
+    text = normalize_text(text)  # Normalize Unicode characters before encoding
     text_emb = model.encode(text, convert_to_tensor=True)
     scores = {}
     for trait, anchor in TRAIT_ANCHORS.items():

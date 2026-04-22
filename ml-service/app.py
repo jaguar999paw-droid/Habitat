@@ -19,6 +19,7 @@ from emotion_model  import detect_emotions, get_model
 from conflict_model import classify_conflicts
 from trait_model    import score_traits
 from language_model import detect_language
+from text_normalizer import normalize_text
 
 app = Flask(__name__)
 CORS(app)
@@ -97,7 +98,9 @@ def embed():
         return jsonify({'error': 'model not yet loaded'}), 503
     try:
         model  = get_model()
-        embeds = model.encode(texts).tolist()
+        # Normalize each text before encoding to prevent ByteString conversion errors
+        normalized_texts = [normalize_text(t) if isinstance(t, str) else t for t in texts]
+        embeds = model.encode(normalized_texts).tolist()
         return jsonify({'embeddings': embeds})
     except Exception as e:
         return jsonify({'error': str(e)}), 500
