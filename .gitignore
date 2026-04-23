@@ -3,3 +3,15 @@ node_modules/
 dist/
 .DS_Store
 *.log
+
+# Internal documentation — never committed to GitHub
+internal-docs/
+docs/
+
+# Loose root-level markdown files (non-README)
+COMPLETION_SUMMARY.md
+FEATURE_SPECIFICATION.md
+IMPLEMENTATION_STATUS.md
+PROMPT.md
+QUICK_REFERENCE.md
+AI_HANDOFF_V3.md
