@@ -1,17 +1,38 @@
+# Dependencies
 node_modules/
-.env
-dist/
-.DS_Store
+*/node_modules/
+
+# Session data & persistence (local only)
+.habitat-sessions/
+
+# Backups from patching
+*.bak
+*.bak2
+
+# Logs
 *.log
+npm-debug.log*
 
-# Internal documentation — never committed to GitHub
-internal-docs/
-docs/
+# Environment
+.env
+.env.local
+.env.*.local
 
-# Loose root-level markdown files (non-README)
-COMPLETION_SUMMARY.md
-FEATURE_SPECIFICATION.md
-IMPLEMENTATION_STATUS.md
-PROMPT.md
-QUICK_REFERENCE.md
-AI_HANDOFF_V3.md
+# Build output
+frontend/dist/
+frontend/build/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+ml-service/__pycache__/
+ml-service/**/__pycache__/
+
+# Editor
+.vscode/
+.idea/

@@ -33,6 +33,7 @@ const { validateOverrides }         = require('../engine/identitySchema');
 const { detectPropertyTensions, applyTensionsToCraft, buildTensionSummary } = require('../engine/propertyTensionEngine');
 
 const { generateFullSong, generateSection, formatSong } = require('../ai/generator');
+const { generateFallback, generateSectionFallback, formatSong: formatFallback } = require('../engine/fallbackGenerator');
 
 const app  = express();
 const PORT = process.env.PORT || 3001;
@@ -158,7 +159,14 @@ app.post('/api/analyze', async (req, res) => {
 app.post('/api/generate', async (req, res) => {
   try {
     const { persona, message, structure, style, apiKey, provider = 'claude', model } = req.body;
-    if (!apiKey) return res.status(400).json({ error: 'API key is required.' });
+    if (!apiKey) {
+      const sections  = generateFallback({ persona, message, structure, style });
+      const formatted = formatFallback(sections);
+      return res.json({
+        success: true, sections, song: formatted,
+        metadata: { archetype: persona?.archetype, coreMessage: message?.coreMessage, structure: structure?.conflictType, source: 'fallback' },
+      });
+    }
 
     const sections  = await generateFullSong({ structure, persona, message, style, apiKey, provider, model });
     const formatted = formatSong(sections);
@@ -176,8 +184,11 @@ app.post('/api/generate', async (req, res) => {
 // ── Generate / Regenerate Single Section ─────────────────────────────────────
 app.post('/api/section', async (req, res) => {
   try {
-    const { section, persona, message, style, previousSections = [], apiKey, provider = 'claude', model, seed = 0 } = req.body;
-    if (!apiKey) return res.status(400).json({ error: 'API key is required.' });
+    const { section, persona, message, structure = {}, style, previousSections = [], apiKey, provider = 'claude', model, seed = 0 } = req.body;
+    if (!apiKey) {
+      const content = generateSectionFallback({ sectionType: section?.type, persona, message, structure });
+      return res.json({ success: true, section: { ...section, content, source: 'fallback' } });
+    }
 
     const styleWithSeed = seed > 0
       ? { ...style, seedHint: `Variation ${seed} — use a different angle, metaphor, or opening line.` }
@@ -280,6 +291,15 @@ app.post('/api/delta', (req, res) => {
 });
 
 
+// ── Intent API Routes (Phase 2) ──────────────────────────────────────────────
+const journalRoutes  = require('./routes/journalRoutes');
+const hookbookRoutes = require('./routes/hookbookRoutes');
+const identityRoutes = require('./routes/identityRoutes');
+
+app.use('/api/journal',  journalRoutes);
+app.use('/api/hookbook', hookbookRoutes);
+app.use('/api/identity', identityRoutes);
+
 // ── Hook Book Proxy Routes ─────────────────────────────────────────────────────
 // These proxy to the Python ML service hookbook endpoints
 
@@ -366,90 +386,3 @@ app.listen(PORT, () => {
   console.log(`   Sessions:    ${SESSIONS_DIR}\n`);
 });
 
-// ── Journal Synthesize ──────────────────────────────────────────────────────
-// POST /api/journal/synthesize
-// Body: { entries: [{ text, emotions, timestamp }], apiKey?, provider? }
-// Returns cockpit pre-fill + identity synthesis
-app.post('/api/journal/synthesize', async (req, res) => {
-  const { entries = [], apiKey, provider = 'claude' } = req.body;
-  if (!entries.length) return res.json({ error: 'No entries provided' });
-
-  const combined = entries
-    .slice(-7)
-    .map((e, i) => `Entry ${i + 1} [${e.emotions?.join(', ') || 'untagged'}]:\n${e.text}`)
-    .join('\n\n---\n\n');
-
-  // ── Rule-based fallback ───────────────────────────────────────────────────
-  function ruleSynthesize(text) {
-    const lower = text.toLowerCase();
-    const emotions = ['anger','defiance','sadness','hope','fear','shame','longing','love','rage','grief'];
-    const archetypes = ['defiant','vulnerable','wise','rebel','sage','healer','warrior'];
-    const domEmotion = emotions.find(e => lower.includes(e)) || 'reflection';
-    const archetype  = archetypes.find(a => lower.includes(a)) || 'Seeker';
-    const sentences  = text.match(/[^.!?]+[.!?]+/g) || [text];
-    const confessional = sentences.find(s => /\bi\s+(am|was|feel|felt|need|want|carry)/i.test(s)) || sentences[0];
-    const conflict     = sentences.find(s => /\bbut\b|\bhowever\b|\byet\b|\bstill\b/i.test(s)) || '';
-    return {
-      mainIdea:      confessional?.trim().slice(0, 200) || '',
-      emotionalTruth: domEmotion,
-      socialConflict: conflict?.trim().slice(0, 200) || '',
-      archetype: archetype.charAt(0).toUpperCase() + archetype.slice(1),
-      dominantEmotion: domEmotion,
-      subThemes: [],
-      hookSuggestion: '',
-      method: 'rule-based',
-    };
-  }
-
-  // ── AI synthesis ─────────────────────────────────────────────────────────
-  if (apiKey) {
-    const systemPrompt = `You are SCI — a songwriting identity analysis engine.
-Analyze these journal entries and return ONLY a JSON object (no markdown, no preamble) with exactly these keys:
-{
-  "mainIdea": "1-3 sentence synthesis of the dominant thought/story across entries",
-  "emotionalTruth": "1-2 sentence emotional core — what the writer is truly feeling",
-  "socialConflict": "1-2 sentence description of the tension with the world/others/self",
-  "archetype": "one of: Defiant | Vulnerable | Wise | Rebel | Sage | Healer | Warrior | Seeker | Oracle",
-  "dominantEmotion": "single word",
-  "subThemes": ["up to 4 recurring themes as single words"],
-  "hookSuggestion": "a 1-sentence candidate hook phrase distilled from the entries"
-}`;
-
-    const userPrompt = `Here are the journal entries to synthesize:\n\n${combined}`;
-
-    try {
-      let raw = '';
-      if (provider === 'openai') {
-        const r = await fetch('https://api.openai.com/v1/chat/completions', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
-          body: JSON.stringify({
-            model: 'gpt-4o', max_tokens: 600, temperature: 0.4,
-            messages: [{ role: 'system', content: systemPrompt }, { role: 'user', content: userPrompt }],
-          }),
-        });
-        const d = await r.json();
-        raw = d.choices?.[0]?.message?.content || '';
-      } else {
-        const r = await fetch('https://api.anthropic.com/v1/messages', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'x-api-key': apiKey, 'anthropic-version': '2023-06-01' },
-          body: JSON.stringify({
-            model: 'claude-opus-4-5', max_tokens: 600,
-            system: systemPrompt,
-            messages: [{ role: 'user', content: userPrompt }],
-          }),
-        });
-        const d = await r.json();
-        raw = d.content?.[0]?.text || '';
-      }
-      const cleaned = raw.replace(/```json|```/g, '').trim();
-      const parsed  = JSON.parse(cleaned);
-      return res.json({ ...parsed, method: 'ai', entryCount: entries.length });
-    } catch (e) {
-      console.warn('AI synthesis failed, falling back to rule-based:', e.message);
-    }
-  }
-
-  return res.json({ ...ruleSynthesize(combined), entryCount: entries.length });
-});
