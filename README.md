@@ -1,6 +1,6 @@
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/jaguar999paw-droid/sci-songwriting-engine/main/assets/habitat-ui.png" alt="Habitat UI" width="100%" />
+  <img src="https://raw.githubusercontent.com/jaguar999paw-droid/Habitat/main/assets/habitat-ui.png" alt="Habitat UI" width="100%" />
 </p>
 
 <h1 align="center">Habitat</h1>
@@ -241,8 +241,8 @@ POST /api/delta               Session version comparison
 
 ### One-Command Start
 ```bash
-git clone https://github.com/jaguar999paw-droid/sci-songwriting-engine.git
-cd sci-songwriting-engine
+git clone https://github.com/jaguar999paw-droid/Habitat.git
+cd Habitat
 chmod +x START.sh && ./START.sh
 ```
 
@@ -276,7 +276,7 @@ cd frontend && npm install && npm run dev
 ## Project Structure
 
 ```
-sci-songwriting-engine/
+Habitat/
 ├── frontend/                    React 18 + Vite
 │   └── src/
 │       ├── pages/
@@ -384,5 +384,5 @@ MIT © 2024–2026 — Build freely, credit generously.
 
 <p align="center">
   <strong>Habitat</strong> · Identity-mapped AI songwriting<br/>
-  <a href="https://github.com/jaguar999paw-droid/sci-songwriting-engine">github.com/jaguar999paw-droid/sci-songwriting-engine</a>
+  <a href="https://github.com/jaguar999paw-droid/Habitat">github.com/jaguar999paw-droid/Habitat</a>
 </p>

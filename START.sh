@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # ═══════════════════════════════════════════════════════════════════════════
-# SCI Songwriting Engine — Complete Startup Script
+# Habitat — Complete Startup Script
 # Starts: ML Service (Python Flask) → Backend (Node.js) → Frontend (Vite)
 # ═══════════════════════════════════════════════════════════════════════════
 
@@ -11,7 +11,7 @@ PROJECT_ROOT="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 cd "$PROJECT_ROOT"
 
 echo "════════════════════════════════════════════════════════════════"
-echo "🎵 SCI SONGWRITING ENGINE — STARTUP SEQUENCE"
+echo "🎵 HABITAT — STARTUP SEQUENCE"
 echo "════════════════════════════════════════════════════════════════"
 echo ""
 

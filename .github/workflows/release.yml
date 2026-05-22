@@ -28,9 +28,13 @@ jobs:
       - name: Bundle release archive
         run: |
           mkdir -p release/habitat-${{ github.ref_name }}
-          cp -r backend engine ai ml-service docs release/habitat-${{ github.ref_name }}/
+          cp -r backend engine ai ml-service release/habitat-${{ github.ref_name }}/
+          [ -d docs ] && cp -r docs release/habitat-${{ github.ref_name }}/ || true
           cp -r frontend/dist release/habitat-${{ github.ref_name }}/frontend-dist
-          cp package.json .env.example README.md LICENSE release/habitat-${{ github.ref_name }}/
+          cp -r scripts release/habitat-${{ github.ref_name }}/ 2>/dev/null || true
+          cp package.json .env.example README.md LICENSE START.sh START.ps1 release/habitat-${{ github.ref_name }}/
+          chmod +x release/habitat-${{ github.ref_name }}/START.sh
+          chmod +x release/habitat-${{ github.ref_name }}/scripts/INSTALL.sh 2>/dev/null || true
           cd release
           tar -czf habitat-${{ github.ref_name }}.tar.gz habitat-${{ github.ref_name }}
           zip -r habitat-${{ github.ref_name }}.zip habitat-${{ github.ref_name }}
@@ -42,26 +46,34 @@ jobs:
           body: |
             ## Habitat — AI Songwriting Engine ${{ github.ref_name }}
 
+            Cross-platform source release (Node.js + Python). Works on **Linux**, **macOS**, and **Windows** (PowerShell or Git Bash).
+
             ### What's included
-            - 3-panel Cockpit UI (WHO / WHAT / HOW identity input)
-            - 8-conflict structure planner + PIRE temporal layer
-            - Python ML microservice (emotion, conflict, trait, language models)
-            - Claude + OpenAI provider abstraction
-            - Section-by-section generation with seed-based regeneration
-            - /api/save and /api/sessions for session persistence
+            - Cockpit UI, Hook Book, Studio modes, identity pipeline (15 engine modules)
+            - Python ML microservice + graceful fallback without ML
+            - Claude + OpenAI · section-by-section generation · session save/load
+            - `START.sh` (Unix) · `START.ps1` (Windows) · `scripts/INSTALL.sh`
 
             ### Quick start
+
+            | OS | Install | Run |
+            |---|---|---|
+            | Linux / macOS | `tar -xzf habitat-*.tar.gz && cd habitat-* && ./scripts/INSTALL.sh` | `./START.sh` |
+            | Windows (PowerShell) | Expand `habitat-*.zip` | `.\START.ps1` |
+            | Windows (Git Bash) | same as Linux | `./START.sh` |
+
+            **Requires:** Node.js 18+, Python 3.10+, Anthropic or OpenAI API key.
+
             ```bash
             tar -xzf habitat-${{ github.ref_name }}.tar.gz
             cd habitat-${{ github.ref_name }}
-            cp .env.example backend/.env
-            npm install --prefix backend
-            node backend/server.js &
-            # Serve frontend-dist/ with any static server
-            npx serve frontend-dist -p 3000
+            ./scripts/INSTALL.sh
+            ./START.sh
             ```
 
-            See README.md for full instructions.
+            Open **http://localhost:3000** after startup.
+
+            See README.md for full documentation.
           files: |
             release/habitat-${{ github.ref_name }}.tar.gz
             release/habitat-${{ github.ref_name }}.zip
