@@ -10,6 +10,7 @@
  */
 import { useState, useEffect, useRef } from 'react'
 import styles from './JournalPage.module.css'
+import SuggestiveEditor from '../components/SuggestiveEditor'
 
 const STORAGE_KEY = 'sci_journal_entries'
 
@@ -61,6 +62,7 @@ export default function JournalPage({ onContinue, onSkip }) {
   const [saved,        setSaved]        = useState(false)
   const intervalRef = useRef(null)
   const textareaRef = useRef(null)
+  const [focusMode, setFocusMode] = useState(false)
 
   // ── Timer ──────────────────────────────────────────────────────────────────
   useEffect(() => {
@@ -219,13 +221,17 @@ export default function JournalPage({ onContinue, onSkip }) {
               ))}
             </div>
 
-            {/* Write area */}
-            <textarea
-              ref={textareaRef}
-              className={styles.writeArea}
-              placeholder="Start writing. Don't edit. Don't judge. Just let it out..."
+            {/* Write area — NLP-powered suggestive editor */}
+            <SuggestiveEditor
               value={text}
-              onChange={e => setText(e.target.value)}
+              onChange={setText}
+              placeholder="Start writing. Don't edit. Don't judge. Just let it out..."
+              label="JOURNAL ENTRY"
+              rows={10}
+              showSpectrum={true}
+              showMirror={true}
+              showNextLines={true}
+              focusable={true}
             />
 
             <div className={styles.writeFooter}>

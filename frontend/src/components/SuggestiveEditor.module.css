@@ -1,0 +1,272 @@
+/* SuggestiveEditor.module.css — NLP-powered smart writing area
+ * All colors use global CSS variables from styles/global.css
+ */
+
+/* ── Wrapper ─────────────────────────────────────────────────────────────── */
+.wrapper {
+  display: flex;
+  flex-direction: column;
+  font-family: var(--font-mono);
+  background: var(--surface);
+  border: 1px solid var(--border);
+}
+
+/* ── Toolbar ─────────────────────────────────────────────────────────────── */
+.toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 5px 10px;
+  background: var(--surface2);
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+.label {
+  font-family: var(--font-display);
+  font-size: 11px;
+  letter-spacing: 2px;
+  color: var(--green);
+  text-transform: uppercase;
+}
+.toolbarRight {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+.toolBtn {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  font-size: 9px;
+  padding: 3px 7px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  letter-spacing: 0.5px;
+  transition: all 0.15s;
+}
+.toolBtn:hover    { color: var(--text-dim); border-color: var(--grey-dark); }
+.toolBtn.active   { color: var(--green); border-color: var(--green-dim); background: var(--green-glow2); }
+.focusBtn:hover   { color: #aa88ff !important; border-color: rgba(170,136,255,0.4) !important; }
+.spinner {
+  width: 11px; height: 11px;
+  border: 1.5px solid var(--surface4);
+  border-top-color: var(--green);
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+  flex-shrink: 0;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ── Layout ──────────────────────────────────────────────────────────────── */
+.body {
+  display: grid;
+  grid-template-columns: 1fr 220px;
+}
+@media (max-width: 700px) {
+  .body { grid-template-columns: 1fr; }
+  .feedbackCol { border-top: 1px solid var(--border); border-left: none; }
+}
+
+/* ── Editor ──────────────────────────────────────────────────────────────── */
+.editorCol { display: flex; flex-direction: column; min-width: 0; }
+.editorWrap { position: relative; background: var(--bg); }
+
+.textarea {
+  width: 100%;
+  min-height: 140px;
+  background: transparent;
+  border: none;
+  outline: none;
+  color: var(--text);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  line-height: 1.75;
+  padding: 12px 14px;
+  resize: vertical;
+  box-sizing: border-box;
+  caret-color: var(--green);
+  letter-spacing: 0.2px;
+}
+.textarea::placeholder {
+  color: var(--text-muted);
+  font-style: italic;
+  opacity: 0.5;
+}
+
+/* ── Text Magic Mirror ──────────────────────────────────────────────────── */
+.mirror {
+  padding: 4px 14px 8px;
+  background: var(--surface2);
+  border-top: 1px dashed var(--border);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  line-height: 1.75;
+  color: var(--grey-mid);
+  user-select: none;
+  pointer-events: none;
+}
+.mirrorLine { min-height: 1.75em; }
+
+/* ── Feedback column ────────────────────────────────────────────────────── */
+.feedbackCol {
+  background: var(--surface2);
+  border-left: 1px solid var(--border);
+  overflow-y: auto;
+  max-height: 440px;
+}
+.feedback {
+  padding: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* ── Cards ──────────────────────────────────────────────────────────────── */
+.cardGroup { display: flex; flex-direction: column; gap: 4px; }
+.card {
+  display: flex;
+  align-items: flex-start;
+  gap: 5px;
+  padding: 6px 8px;
+  border-radius: var(--radius-sm);
+  font-family: var(--font-mono);
+  font-size: 9px;
+  line-height: 1.5;
+  border-left: 2px solid transparent;
+  animation: popIn 0.2s cubic-bezier(0.34,1.56,0.64,1);
+}
+@keyframes popIn {
+  from { opacity:0; transform: scale(0.88) translateY(-3px); }
+  to   { opacity:1; transform: scale(1) translateY(0); }
+}
+.cardHigh   { background: rgba(255,51,85,0.08);  border-left-color: var(--error);   color: #ff8899; }
+.cardMedium { background: rgba(255,170,0,0.06);  border-left-color: var(--warning); color: #ffcc66; }
+.cardLow    { background: rgba(80,80,160,0.1);   border-left-color: var(--grey-mid);color: var(--text-dim); }
+.cardAlert  { background: var(--green-glow2);    border-left-color: var(--green);   color: var(--green-dim); }
+.cardIcon   { flex-shrink: 0; margin-top: 1px; }
+.cardText   { flex: 1; }
+.cardX {
+  background: transparent; border: none; cursor: pointer;
+  color: inherit; opacity: 0.4; padding: 0 2px; font-size: 11px;
+}
+.cardX:hover { opacity: 0.9; }
+
+/* ── Emotion Spectrum ───────────────────────────────────────────────────── */
+.spectrum { border-top: 1px solid var(--border); padding-top: 6px; }
+.spectrumLabel {
+  font-family: var(--font-display);
+  font-size: 9px; letter-spacing: 2px;
+  color: var(--text-muted); margin-bottom: 7px;
+  text-transform: uppercase;
+}
+.spectrumRow {
+  display: flex; align-items: center; gap: 5px; margin-bottom: 4px;
+}
+.spectrumKey {
+  font-size: 7px; letter-spacing: 1px; text-transform: uppercase;
+  width: 72px; flex-shrink: 0;
+}
+.spectrumTrack {
+  flex: 1; height: 3px;
+  background: var(--surface3); border-radius: 2px; overflow: hidden;
+}
+.spectrumBar {
+  height: 100%; border-radius: 2px;
+  transition: width 0.55s cubic-bezier(0.4,0,0.2,1);
+  min-width: 2px;
+}
+.spectrumVal {
+  font-size: 8px; color: var(--text-muted); width: 20px; text-align: right;
+}
+
+/* ── Next-line suggestions ──────────────────────────────────────────────── */
+.nextLines { border-top: 1px solid var(--border); padding-top: 5px; }
+.nextLinesLabel {
+  font-family: var(--font-display);
+  font-size: 9px; letter-spacing: 1.5px;
+  color: var(--text-muted); margin-bottom: 5px;
+  text-transform: uppercase;
+}
+.nextLine {
+  display: block; width: 100%;
+  background: var(--surface3);
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  font-size: 9px; padding: 5px 8px; margin-bottom: 3px;
+  border-radius: var(--radius-sm);
+  cursor: pointer; text-align: left; line-height: 1.5;
+  font-style: italic; transition: all 0.15s;
+}
+.nextLine:hover {
+  background: var(--surface4);
+  border-color: var(--green-dim);
+  color: var(--text-dim);
+}
+
+/* ── Syllables ───────────────────────────────────────────────────────────── */
+.syllables { border-top: 1px solid var(--border); padding-top: 5px; }
+.syllablesLabel {
+  font-family: var(--font-display);
+  font-size: 9px; letter-spacing: 1.5px;
+  color: var(--text-muted); margin-bottom: 5px;
+  text-transform: uppercase;
+}
+.sylRow {
+  display: flex; gap: 6px; align-items: baseline; margin-bottom: 2px;
+}
+.sylCount {
+  font-size: 10px; font-weight: 700; color: var(--green);
+  min-width: 20px; text-align: right;
+}
+.sylLine {
+  font-size: 9px; color: var(--text-muted);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1;
+}
+
+/* ── Focus / Zen Mode ───────────────────────────────────────────────────── */
+.overlay {
+  position: fixed; inset: 0;
+  background: rgba(4,4,7,0.97);
+  z-index: 1000; display: flex;
+  align-items: stretch; justify-content: center;
+  animation: fadeOverlay 0.18s ease;
+}
+@keyframes fadeOverlay { from { opacity:0; } to { opacity:1; } }
+
+.overlayInner {
+  width: 100%; max-width: 1200px;
+  display: flex; flex-direction: column;
+  padding: 14px 20px; box-sizing: border-box;
+}
+.overlayHeader {
+  display: flex; align-items: center; gap: 10px;
+  padding-bottom: 10px; border-bottom: 1px solid var(--border); margin-bottom: 12px;
+}
+.overlayLabel {
+  font-family: var(--font-display);
+  font-size: 12px; letter-spacing: 4px;
+  color: var(--green); text-transform: uppercase; flex: 1;
+}
+.overlayHint {
+  font-family: var(--font-mono);
+  font-size: 10px; color: var(--text-muted); letter-spacing: 1px;
+}
+.closeOverlay {
+  background: transparent; border: 1px solid var(--border);
+  color: #aa88ff; font-family: var(--font-mono);
+  font-size: 10px; padding: 4px 10px;
+  border-radius: var(--radius-sm); cursor: pointer; transition: all 0.15s;
+}
+.closeOverlay:hover { border-color: rgba(170,136,255,0.5); background: rgba(170,136,255,0.07); }
+
+.overlayBody {
+  flex: 1; display: grid;
+  grid-template-columns: 1fr 280px; gap: 14px; min-height: 0;
+}
+.overlayLeft { display: flex; flex-direction: column; border: 1px solid var(--border); }
+.overlayRight { overflow-y: auto; }
+.editorFocus { flex: 1; }
+.editorFocus .textarea { min-height: 420px; height: 100%; font-size: 14px; line-height: 1.9; }
+.feedbackFocus { padding: 0; gap: 10px; }

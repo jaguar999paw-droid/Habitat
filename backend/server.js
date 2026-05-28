@@ -31,6 +31,7 @@ const { mapStyle }         = require('../engine/styleMapper');
 const { analyzeReference } = require('../engine/referenceAnalyzer');
 const { validateOverrides }         = require('../engine/identitySchema');
 const { detectPropertyTensions, applyTensionsToCraft, buildTensionSummary } = require('../engine/propertyTensionEngine');
+const { buildIdentityVector, computeDrift } = require('../engine/identityDrift');
 
 const { generateFullSong, generateSection, formatSong } = require('../ai/generator');
 const { generateFallback, generateSectionFallback, formatSong: formatFallback } = require('../engine/fallbackGenerator');
@@ -207,7 +208,23 @@ app.post('/api/save', (req, res) => {
   try {
     const timestamp = Date.now();
     const filepath  = path.join(SESSIONS_DIR, `session-${timestamp}.json`);
-    fs.writeFileSync(filepath, JSON.stringify({ ...req.body, savedAt: new Date().toISOString(), id: timestamp }, null, 2));
+    
+    // Build session object
+    const session = {
+      ...req.body,
+      savedAt: new Date().toISOString(),
+      id: timestamp,
+    };
+
+    // Add identity_vector snapshot if parsed and persona are present
+    if (req.body.parsed && req.body.persona) {
+      session.identity_snapshot = {
+        timestamp: timestamp,
+        identity_vector: buildIdentityVector(req.body.parsed, req.body.persona),
+      };
+    }
+
+    fs.writeFileSync(filepath, JSON.stringify(session, null, 2));
     res.json({ success: true, id: timestamp, filename: `session-${timestamp}.json`, path: filepath });
   } catch (err) {
     console.error('Save error:', err);
@@ -377,6 +394,114 @@ app.post('/api/hookbook/analyze', async (req, res) => {
   catch(e) { res.status(503).json({ error: e.message }); }
 });
 
+// POST /api/hookbook/suggest     — real-time NLP suggestive writing feedback
+app.post('/api/hookbook/suggest', async (req, res) => {
+  try { res.json(await proxyToML('/hookbook/suggest', req.body)); }
+  catch(e) { res.status(503).json({ error: e.message }); }
+});
+
+
+
+// ── SSE Streaming: /api/section/stream ───────────────────────────────────────
+// Streams a single section token-by-token using Server-Sent Events.
+// Sends: data: {token: str}  for each content chunk
+//        data: {done: true, section: {...}}  when complete
+//        data: {error: str}  on failure
+//
+app.post('/api/section/stream', async (req, res) => {
+  const { section, persona, message, structure = {}, style, previousSections = [], apiKey, provider = 'claude', model, seed = 0 } = req.body;
+
+  // SSE headers
+  res.setHeader('Content-Type', 'text/event-stream');
+  res.setHeader('Cache-Control', 'no-cache');
+  res.setHeader('Connection', 'keep-alive');
+  res.setHeader('X-Accel-Buffering', 'no');
+  res.flushHeaders();
+
+  const send = (obj) => {
+    if (!res.writableEnded) res.write(`data: ${JSON.stringify(obj)}\n\n`);
+  };
+
+  if (!apiKey) {
+    // Fallback: stream the fallback line-by-line with fake delay
+    try {
+      const { generateSectionFallback } = require('../engine/fallbackGenerator');
+      const content = generateSectionFallback({ sectionType: section?.type, persona, message, structure });
+      const lines = content.split('\n');
+      for (const line of lines) {
+        send({ token: line + '\n' });
+        await new Promise(r => setTimeout(r, 35));
+      }
+      send({ done: true, section: { ...section, content, source: 'fallback' } });
+    } catch (err) {
+      send({ error: err.message });
+    }
+    res.end();
+    return;
+  }
+
+  try {
+    const styleWithSeed = seed > 0
+      ? { ...style, seedHint: `Variation ${seed} — use a different angle, metaphor, or opening line.` }
+      : style;
+
+    // Build the prompt
+    const { buildSectionPrompt } = require('../ai/promptBuilder');
+    const { systemPrompt, userPrompt } = buildSectionPrompt({ section, persona, message, style: styleWithSeed, previousSections });
+
+    // Stream from Anthropic
+    const response = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': apiKey,
+        'anthropic-version': '2023-06-01',
+        'anthropic-beta': 'messages-2023-12-15',
+      },
+      body: JSON.stringify({
+        model: model || 'claude-sonnet-4-6',
+        max_tokens: 1024,
+        stream: true,
+        system: systemPrompt,
+        messages: [{ role: 'user', content: userPrompt }],
+      }),
+    });
+
+    if (!response.ok) {
+      const err = await response.json().catch(() => ({}));
+      send({ error: err.error?.message || `HTTP ${response.status}` });
+      res.end();
+      return;
+    }
+
+    let fullContent = '';
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder();
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      const chunk = decoder.decode(value, { stream: true });
+      const lines = chunk.split('\n').filter(l => l.startsWith('data: '));
+      for (const line of lines) {
+        try {
+          const json = JSON.parse(line.slice(6));
+          if (json.type === 'content_block_delta' && json.delta?.type === 'text_delta') {
+            const token = json.delta.text;
+            fullContent += token;
+            send({ token });
+          }
+          if (json.type === 'message_stop') {
+            send({ done: true, section: { ...section, content: fullContent.trim(), source: 'api' } });
+          }
+        } catch { /* skip malformed chunks */ }
+      }
+    }
+  } catch (err) {
+    send({ error: err.message });
+  }
+  res.end();
+});
 
 // ── Start ─────────────────────────────────────────────────────────────────────
 app.listen(PORT, () => {

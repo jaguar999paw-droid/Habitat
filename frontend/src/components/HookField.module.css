@@ -1,0 +1,203 @@
+/** HookField.module.css */
+
+.hookField {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  height: 100%;
+  overflow: hidden;
+}
+
+.hookField.reservoir .inputArea {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.hookField.extraction .inputArea {
+  display: none;
+}
+
+.inputArea {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.hookInput {
+  flex: 1;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  color: var(--green);
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  padding: 0.5rem;
+  resize: none;
+  max-height: 3rem;
+}
+
+.hookInput::placeholder {
+  color: var(--text-muted);
+}
+
+.hookInput:focus {
+  outline: none;
+  border-color: var(--green);
+  box-shadow: 0 0 8px var(--green-glow);
+}
+
+.addBtn {
+  background: var(--green-glow);
+  border: 1px solid var(--green);
+  color: var(--green);
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.addBtn:hover:not(:disabled) {
+  background: rgba(0,255,136,0.3);
+  box-shadow: 0 0 8px var(--green-glow);
+}
+
+.addBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.hooksList {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding-right: 0.25rem;
+}
+
+.hooksList::-webkit-scrollbar {
+  width: 6px;
+}
+
+.hooksList::-webkit-scrollbar-track {
+  background: var(--green-glow);
+  border-radius: 3px;
+}
+
+.hooksList::-webkit-scrollbar-thumb {
+  background: rgba(0,255,136,0.3);
+  border-radius: 3px;
+}
+
+.hooksList::-webkit-scrollbar-thumb:hover {
+  background: rgba(0,255,136,0.3);
+}
+
+.emptyState {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-muted);
+  font-size: 0.8rem;
+  text-align: center;
+  padding: 1rem;
+}
+
+.hookCard {
+  background: var(--green-glow2);
+  border: 1px solid var(--green-glow);
+  border-radius: 4px;
+  padding: 0.75rem;
+  transition: all 0.2s ease;
+}
+
+.hookCard.locked {
+  background: var(--green-glow2);
+  border-color: var(--text-muted);
+}
+
+.hookCard.liquid {
+  background: var(--green-glow2);
+  border-color: var(--green-glow);
+}
+
+.hookCard:hover {
+  border-color: var(--text-muted);
+  background: var(--green-glow);
+}
+
+.hookHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+.hookState {
+  color: var(--green);
+  font-weight: bold;
+}
+
+.lockBtn {
+  background: none;
+  border: none;
+  color: var(--green);
+  font-size: 1rem;
+  cursor: pointer;
+  padding: 0;
+  opacity: 0.7;
+  transition: opacity 0.2s ease;
+}
+
+.lockBtn:hover {
+  opacity: 1;
+}
+
+.hookText {
+  color: var(--green);
+  font-size: 0.85rem;
+  line-height: 1.4;
+  margin-bottom: 0.5rem;
+  word-break: break-word;
+}
+
+.metadataTags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+  margin-bottom: 0.5rem;
+}
+
+.tag {
+  background: var(--green-glow);
+  border: 1px solid var(--green-glow);
+  color: rgba(0,255,136,0.5);
+  padding: 0.2rem 0.4rem;
+  border-radius: 2px;
+  font-size: 0.65rem;
+  text-transform: capitalize;
+}
+
+.deleteBtn {
+  width: 100%;
+  background: rgba(255, 68, 68, 0.1);
+  border: 1px solid rgba(255, 68, 68, 0.3);
+  color: #ff6666;
+  padding: 0.4rem;
+  border-radius: 3px;
+  font-size: 0.7rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.deleteBtn:hover {
+  background: rgba(255, 68, 68, 0.2);
+  border-color: #ff6666;
+}

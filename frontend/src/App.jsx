@@ -1,14 +1,15 @@
 /**
- * App.jsx — v2.2 Root application component
+ * App.jsx — v2.3 Root application component
  *
  * Flow:
  *   Step 0: Landing           — API key setup, provider selection
  *   Step 1: JournalPage       — Identity excavation (timed prompts + synthesis)  [SKIP available]
- *   Step 2: HookWorksheet     — Pre-Cockpit hook planning (references + structure)[SKIP available]
- *   Step 3: Cockpit           — 4-phase spatial identity input (pre-filled from steps 1+2)
- *   Step 4: CockpitPreview    — Cinematic persona reveal
- *   Step 5: Generator         — Section-by-section AI generation
- *   Step 6: SongDisplay       — Final song + HookBookPanel drawer
+ *   Step 2: CockpitV5         — Unified 4-zone: Journal / Hooks / Identity / Charts
+ *   Step 3: CockpitPreview    — Cinematic persona reveal
+ *   Step 4: Generator         — Section-by-section AI generation
+ *   Step 5: SongDisplay       — Final song + HookBookPanel drawer
+ *
+ *   (HookWorksheet and old Cockpit archived — superseded by CockpitV5)
  */
 import { useState } from 'react'
 import Landing        from './pages/Landing'
@@ -18,6 +19,7 @@ import Cockpit        from './pages/Cockpit'
 import CockpitPreview from './pages/CockpitPreview'
 import Generator      from './pages/Generator'
 import SongDisplay    from './pages/SongDisplay'
+import CockpitV5      from './pages/CockpitV5'
 import styles         from './App.module.css'
 
 export default function App() {
@@ -51,29 +53,26 @@ export default function App() {
   // ── Step handlers ───────────────────────────────────────────────────────
   function handleJournalContinue(fill) {
     setJournalFill(fill)
-    setStep(2) // → HookWorksheet
+    setStep(2) // → CockpitV5
   }
   function handleJournalSkip() {
-    setStep(2)
+    setStep(2) // → CockpitV5
   }
 
-  function handleHookContinue(overrides) {
-    setHookOverrides(overrides)
-    setStep(3) // → Cockpit
+  // CockpitV5 emits {answers, persona} when user is ready to generate
+  function handleCockpitV5Done(submittedAnswers) {
+    setAnswers(submittedAnswers)
+    setStep(3) // → CockpitPreview
   }
-  function handleHookSkip() {
-    setStep(3)
-  }
-
   function handleAnswersDone(submittedAnswers) {
     setAnswers(submittedAnswers)
-    setStep(4) // → CockpitPreview
+    setStep(3) // → CockpitPreview (legacy shim)
   }
   function handleAnalysisDone(data) {
-    setAnalysis(data); setStep(5)
+    setAnalysis(data); setStep(4)
   }
   function handleSongDone(data) {
-    setSong(data); setStep(6)
+    setSong(data); setStep(5)
   }
 
   function restart() {
@@ -102,22 +101,15 @@ export default function App() {
         />
       )}
       {step === 2 && (
-        <HookWorksheet
-          preFill={journalFill}
-          onContinue={handleHookContinue}
-          onSkip={handleHookSkip}
+        <CockpitV5
+          preFill={cockpitPreFill}
+          onDone={handleCockpitV5Done}
         />
       )}
       {step === 3 && (
-        <Cockpit
-          onDone={handleAnswersDone}
-          preFill={cockpitPreFill}
-        />
-      )}
-      {step === 4 && (
         <CockpitPreview answers={answers} onAnalysis={handleAnalysisDone} />
       )}
-      {step === 5 && analysis && (
+      {step === 4 && analysis && (
         <Generator
           analysis={analysis}
           apiKey={apiKey}
@@ -126,7 +118,7 @@ export default function App() {
           onDone={handleSongDone}
         />
       )}
-      {step === 6 && song && (
+      {step === 5 && song && (
         <SongDisplay
           song={song}
           analysis={analysis}

@@ -316,5 +316,54 @@ router.post('/coherence-batch', (req, res) => {
   }
 });
 
+
+/**
+ * GET /api/hookbook/profile
+ * Returns identity profile inferred from hook corpus (KOKI Phase 7)
+ */
+router.get('/profile', (req, res) => {
+  try {
+    const hookbookStore = require('../../engine/hookbookStore');
+    const profile = hookbookStore.getProfile();
+    res.json({ success: true, profile });
+  } catch (err) {
+    res.status(500).json({ error: 'Profile generation failed', message: err.message });
+  }
+});
+
+/**
+ * GET /api/hookbook/hooks
+ * List all stored hooks
+ */
+router.get('/hooks', (req, res) => {
+  try {
+    const hookbookStore = require('../../engine/hookbookStore');
+    const store = hookbookStore.getStore();
+    const limit = Math.min(parseInt(req.query.limit) || 50, 200);
+    const hooks = (store.hooks || []).slice(-limit).reverse();
+    res.json({ success: true, hooks, total: (store.hooks || []).length });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to fetch hooks', message: err.message });
+  }
+});
+
+/**
+ * POST /api/hookbook/hooks/:id/lock
+ * Toggle lock state on a hook
+ */
+router.post('/hooks/:id/lock', (req, res) => {
+  try {
+    const hookbookStore = require('../../engine/hookbookStore');
+    const store = hookbookStore.getStore();
+    const hook = (store.hooks || []).find(h => h.id === req.params.id);
+    if (!hook) return res.status(404).json({ error: 'Hook not found' });
+    hook.locked = !hook.locked;
+    hookbookStore.save(store);
+    res.json({ success: true, hook });
+  } catch (err) {
+    res.status(500).json({ error: 'Lock failed', message: err.message });
+  }
+});
+
 module.exports = router;
 

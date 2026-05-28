@@ -13,6 +13,9 @@
 
 const express = require('express');
 const router = express.Router();
+const { extractHooks }  = require('../../engine/hookExtractor');
+const hookbookStore     = require('../../engine/hookbookStore');
+
 
 const fs   = require('fs');
 const path = require('path');
@@ -202,7 +205,23 @@ router.get('/entries', (req, res) => {
  */
 router.post('/synthesize', (req, res) => {
   try {
-    const { entryIds, forceRefresh } = req.body;
+    const { entryIds, forceRefresh, text, emotions } = req.body;
+
+    // If raw text+emotions sent directly (from CockpitV5 journal zone), auto-save first
+    if (text && text.trim().length >= 5) {
+      const autoEmotions = (Array.isArray(emotions) && emotions.length > 0) ? emotions : ['sadness'];
+      const autoId = 'entry_' + Date.now() + '_auto';
+      const autoMeta = {
+        wordCount: text.trim().split(/\s+/).length,
+        sentenceCount: text.split(/[.!?]+/).filter(s => s.trim()).length,
+        emotionCount: autoEmotions.length,
+        temporalMarkers: { past: 0.33, present: 0.34, future: 0.33 },
+        languageDetected: 'en',
+        timestamp: Date.now(),
+      };
+      journalStore[autoId] = { entryId: autoId, text: text.trim(), emotions: autoEmotions, promptIdx: 0, timestamp: Date.now(), metadata: autoMeta };
+      saveJournalStore();
+    }
     
     let entriesToSynthesize = [];
     if (entryIds && Array.isArray(entryIds)) {
@@ -285,6 +304,19 @@ router.post('/synthesize', (req, res) => {
           ? 'Sage'
           : 'Seeker';
     
+    // Auto-extract hooks from synthesized entries (KOKI Phase 2)
+    try {
+      const allText = entriesToSynthesize.map(e => e.text).join('\n');
+      const extractedHooks = extractHooks(allText);
+      const added = hookbookStore.addHooks(extractedHooks, 'journal');
+      var _hooksAdded = added;
+      var _hooksExtracted = extractedHooks.slice(0, 5);
+    } catch (hookErr) {
+      console.warn('Hook extraction error (non-fatal):', hookErr.message);
+      var _hooksAdded = 0;
+      var _hooksExtracted = [];
+    }
+
     res.json({
       cockpitPrefill: {
         mainIdea: `Theme emerging from your recent entries: ${subThemes.join(', ') || 'Personal growth'}`,
@@ -297,6 +329,8 @@ router.post('/synthesize', (req, res) => {
       archetypeRecommendation: archetype,
       temporalProfile,
       contradictions: [],  // TODO: Implement contradiction detection
+      extractedHooks:      _hooksExtracted || [],
+      hooksAddedToBook:    _hooksAdded || 0,
       emotionTrajectory: {
         last7Days: entriesToSynthesize.map(e => ({
           date: new Date(e.timestamp).toISOString().split('T')[0],

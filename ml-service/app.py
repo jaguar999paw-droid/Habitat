@@ -210,3 +210,21 @@ if __name__ == '__main__':
     port = int(os.environ.get('ML_PORT', 3002))
     print(f"[SCI-ML] Starting on port {port}", flush=True)
     app.run(host='0.0.0.0', port=port, debug=False)
+
+# ── Suggestive Writing Engine ─────────────────────────────────────────────────
+from suggest_engine import suggest_inline
+
+@app.route('/hookbook/suggest', methods=['POST'])
+def hb_suggest():
+    """POST {lines: [str], text?: str} — real-time NLP writing suggestions"""
+    d = request.get_json(silent=True) or {}
+    lines = d.get('lines', [])
+    text  = d.get('text', '\n'.join(lines))
+    if not lines and not text:
+        return jsonify({'error': 'lines or text required'}), 400
+    if not lines:
+        lines = [l for l in text.split('\n') if l.strip()]
+    try:
+        return jsonify(suggest_inline(lines, text))
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500

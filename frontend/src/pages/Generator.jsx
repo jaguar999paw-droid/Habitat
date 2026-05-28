@@ -38,6 +38,61 @@ export default function Generator({ analysis, apiKey, provider, model, onDone })
     }
   }, [sections])
 
+  // Generate a single section using SSE streaming
+  async function generateSectionStreaming(sectionDef, prevSections) {
+    return new Promise((resolve, reject) => {
+      let accum = ''
+      let resolved = false
+
+      // Use fetch with SSE — backend returns text/event-stream
+      fetch('/api/section/stream', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          section: sectionDef, persona, message, style,
+          previousSections: prevSections, apiKey, provider, model,
+        }),
+      }).then(res => {
+        if (!res.ok) { res.json().then(e => reject(new Error(e.error || `HTTP ${res.status}`))); return }
+        const reader = res.body.getReader()
+        const dec    = new TextDecoder()
+
+        const pump = () => reader.read().then(({ done, value }) => {
+          if (done) {
+            if (!resolved) reject(new Error('Stream ended without completion'))
+            return
+          }
+          const text = dec.decode(value, { stream: true })
+          const lines = text.split('\n').filter(l => l.startsWith('data: '))
+          for (const line of lines) {
+            try {
+              const json = JSON.parse(line.slice(6))
+              if (json.token !== undefined) {
+                accum += json.token
+                // Live update current section being written
+                setSections(prev => {
+                  const next = [...prev]
+                  const last = next[next.length - 1]
+                  if (last && last._streaming) {
+                    next[next.length - 1] = { ...last, lyrics: accum }
+                  }
+                  return next
+                })
+              }
+              if (json.done) {
+                resolved = true
+                resolve({ ...json.section, lyrics: json.section.content || accum.trim() })
+              }
+              if (json.error) reject(new Error(json.error))
+            } catch { /* skip */ }
+          }
+          pump()
+        }).catch(reject)
+        pump()
+      }).catch(reject)
+    })
+  }
+
   async function generateAll() {
     setStatus('generating')
     const allSections = structure.sections
@@ -45,24 +100,14 @@ export default function Generator({ analysis, apiKey, provider, model, onDone })
 
     for (let i = 0; i < allSections.length; i++) {
       setCurrentIdx(i)
+      // Add streaming placeholder
+      setSections(prev => [...prev, { ...allSections[i], lyrics: '', _streaming: true }])
       try {
-        const res = await fetch('/api/section', {
-          method:  'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            section:          allSections[i],
-            persona, message, style,
-            previousSections: previousRef.current,
-            apiKey, provider, model,
-          }),
-        })
-        if (!res.ok) {
-          const err = await res.json()
-          throw new Error(err.error || `HTTP ${res.status}`)
-        }
-        const data = await res.json()
-        generated.push(data.section)
+        const section = await generateSectionStreaming(allSections[i], previousRef.current)
+        section._streaming = false
+        generated.push(section)
         previousRef.current = [...generated]
+        // Replace streaming placeholder with final
         setSections([...generated])
       } catch (err) {
         setError(err.message)

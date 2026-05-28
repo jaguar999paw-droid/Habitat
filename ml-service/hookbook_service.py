@@ -68,7 +68,7 @@ def classify_meter(pattern):
         if s > score: score=s; best=name; fsize=sz
     if score < 0.4: return "free verse"
     nfeet = round(len(c)/fsize)
-    return f"{best} {deg.get(nfeet, str(nfeet)+"-foot")}"
+    suffix = deg.get(nfeet, str(nfeet)+"-foot"); return f"{best} {suffix}"
 
 def detect_end_rhyme_scheme(lines):
     end_words = []

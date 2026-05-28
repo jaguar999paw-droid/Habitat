@@ -9,6 +9,7 @@
 
 const express = require('express');
 const router = express.Router();
+const { scoreAuthenticity, scoreConsistency, scoreDepth, scoreNuance } = require('../../engine/metrics');
 
 const fs   = require('fs');
 const path = require('path');
@@ -270,45 +271,14 @@ router.post('/unbiased-assessment', (req, res) => {
   try {
     const { journalEntries, hookData, userSliders } = req.body;
     
-    // Authenticity: Does journal match slider claims?
-    let authenticity = 50;
-    if (journalEntries && journalEntries.length > 0) {
-      const journalEmotionalContent = journalEntries.join(' ').toLowerCase();
-      const hasEmotionalLanguage = /hurt|pain|feel|struggle|strength|growth|transform/.test(journalEmotionalContent);
-      authenticity = hasEmotionalLanguage ? 75 : 50;
-    }
+    // Richer scoring via engine/metrics.js (KOKI Phase 5)
+    const entries = journalEntries || [];
+    const authenticity = scoreAuthenticity(entries);
+    const consistency  = scoreConsistency(entries);
     
-    // Consistency: Are claims repeated across entries?
-    let consistency = 50;
-    if (journalEntries && journalEntries.length > 2) {
-      const keywords = {};
-      journalEntries.forEach(entry => {
-        const words = entry.toLowerCase().match(/\b\w{4,}\b/g) || [];
-        words.forEach(w => {
-          keywords[w] = (keywords[w] || 0) + 1;
-        });
-      });
-      const repeatedWords = Object.values(keywords).filter(count => count > 1).length;
-      consistency = repeatedWords > 5 ? 75 : repeatedWords > 2 ? 60 : 40;
-    }
-    
-    // Depth: Is content specific vs. generic?
-    let depth = 50;
-    if (journalEntries && journalEntries.length > 0) {
-      const totalWords = journalEntries.reduce((sum, e) => sum + e.split(/\s+/).length, 0);
-      const avgWordsPerEntry = totalWords / journalEntries.length;
-      depth = avgWordsPerEntry > 50 ? 75 : avgWordsPerEntry > 30 ? 60 : 40;
-    }
-    
-    // Nuance: Is there complexity (duality, temporal range)?
-    let nuance = 50;
-    if (hookData && hookData.references && hookData.references.length > 1) {
-      nuance += 15;
-    }
-    if (userSliders && userSliders.rawness !== userSliders.decisiveness) {
-      nuance += 10;
-    }
-    nuance = Math.min(100, nuance);
+    // Depth + Nuance via engine/metrics.js (KOKI Phase 5)
+    const depth = scoreDepth(entries);
+    const nuance = scoreNuance(entries, hookData || {}, userSliders || {});
     
     // Detect biases
     const bias = {
@@ -368,6 +338,84 @@ router.post('/unbiased-assessment', (req, res) => {
     });
   } catch (err) {
     res.status(500).json({ error: 'Assessment failed', message: err.message });
+  }
+});
+
+
+// ── GET /api/identity/drift ──────────────────────────────────────────────────
+// Compare identity snapshots from two saved sessions.
+// Query params: sessionA=<timestamp>, sessionB=<timestamp>
+// If only sessionA is given, compares with the most recent session.
+const { computeDrift, getTrend } = require('../../engine/identityDrift');
+const SESSIONS_DIR = require('path').join(require('os').homedir(), '.habitat-sessions');
+
+router.get('/drift', (req, res) => {
+  try {
+    const { sessionA, sessionB } = req.query;
+    if (!sessionA) {
+      return res.status(400).json({ error: 'sessionA query param is required' });
+    }
+
+    const loadSession = (ts) => {
+      const file = require('path').join(SESSIONS_DIR, `session-${ts}.json`);
+      if (!require('fs').existsSync(file)) return null;
+      return JSON.parse(require('fs').readFileSync(file, 'utf8'));
+    };
+
+    const getLatestSession = () => {
+      const files = require('fs').readdirSync(SESSIONS_DIR)
+        .filter(f => f.startsWith('session-') && f.endsWith('.json'))
+        .sort().reverse();
+      if (!files.length) return null;
+      return JSON.parse(require('fs').readFileSync(require('path').join(SESSIONS_DIR, files[0]), 'utf8'));
+    };
+
+    const sA = loadSession(sessionA);
+    if (!sA) return res.status(404).json({ error: `Session ${sessionA} not found` });
+
+    const sB = sessionB ? loadSession(sessionB) : getLatestSession();
+    if (!sB) return res.status(404).json({ error: `Session ${sessionB || 'latest'} not found` });
+
+    const snapshotA = sA.identity_snapshot;
+    const snapshotB = sB.identity_snapshot;
+
+    if (!snapshotA || !snapshotB) {
+      return res.status(422).json({
+        error: 'One or both sessions lack an identity_snapshot. Sessions must be saved after the May 2026 engine update.',
+        sessionA_has_snapshot: !!snapshotA,
+        sessionB_has_snapshot: !!snapshotB,
+      });
+    }
+
+    const drift = computeDrift(snapshotA, snapshotB);
+
+    // Also build longitudinal trend for the 3 most meaningful properties
+    const allSessions = require('fs').readdirSync(SESSIONS_DIR)
+      .filter(f => f.startsWith('session-') && f.endsWith('.json'))
+      .sort()
+      .map(f => {
+        try {
+          const s = JSON.parse(require('fs').readFileSync(require('path').join(SESSIONS_DIR, f), 'utf8'));
+          return s.identity_snapshot;
+        } catch { return null; }
+      })
+      .filter(Boolean);
+
+    const trends = {};
+    for (const prop of ['emotion_intensity', 'conflict_score', 'trait_count']) {
+      trends[prop] = getTrend(allSessions, prop);
+    }
+
+    res.json({
+      drift,
+      trends,
+      sessions: {
+        A: { id: sA.id, savedAt: sA.savedAt },
+        B: { id: sB.id, savedAt: sB.savedAt },
+      },
+    });
+  } catch (err) {
+    res.status(500).json({ error: 'Drift computation failed', message: err.message });
   }
 });
 

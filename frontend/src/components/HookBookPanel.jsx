@@ -14,10 +14,12 @@
  */
 import { useState } from 'react'
 import styles from './HookBookPanel.module.css'
+import SuggestiveEditor from './SuggestiveEditor'
 
-const API = 'http://localhost:3001/api/hookbook'
+const API = (import.meta.env.VITE_BACKEND_URL || 'http://localhost:3001') + '/api/hookbook'
+const BACKEND_API = import.meta.env.VITE_BACKEND_URL || 'http://localhost:3001'
 
-const TABS = ['ANALYZE', 'RHYMES', 'SYNONYMS', 'GRAMMAR']
+const TABS = ['WRITE', 'ANALYZE', 'RHYMES', 'SYNONYMS', 'GRAMMAR']
 
 // ── helpers ────────────────────────────────────────────────────────────────
 async function post(endpoint, body) {
@@ -30,6 +32,28 @@ async function post(endpoint, body) {
 }
 
 // ── sub-panels ──────────────────────────────────────────────────────────────
+
+
+function WriteTab() {
+  const [text, setText] = useState('')
+  return (
+    <div className={styles.tabBody}>
+      <SuggestiveEditor
+        value={text}
+        onChange={setText}
+        placeholder="Write your hook, verse, or lyric fragment here...
+NLP feedback appears live on the right."
+        label="HOOK / LYRIC WRITER"
+        rows={8}
+        apiBase={BACKEND_API + '/api'}
+        showSpectrum={true}
+        showMirror={true}
+        showNextLines={true}
+        focusable={true}
+      />
+    </div>
+  )
+}
 
 function AnalyzeTab({ sections }) {
   const [selIdx,   setSelIdx]   = useState(0)
@@ -357,10 +381,11 @@ export default function HookBookPanel({ open, onClose, sections = [] }) {
 
         {/* Content */}
         <div className={styles.content}>
-          {tab === 0 && <AnalyzeTab  sections={sections} />}
-          {tab === 1 && <RhymesTab />}
-          {tab === 2 && <SynonymsTab />}
-          {tab === 3 && <GrammarTab  sections={sections} />}
+          {tab === 0 && <WriteTab />}
+          {tab === 1 && <AnalyzeTab  sections={sections} />}
+          {tab === 2 && <RhymesTab />}
+          {tab === 3 && <SynonymsTab />}
+          {tab === 4 && <GrammarTab  sections={sections} />}
         </div>
       </div>
     </>

@@ -1,0 +1,313 @@
+/** CockpitV5.module.css — Cockpit Instrument Panel v3
+ *
+ * Design direction: modular synthesizer / studio monitoring desk
+ * - Each zone is a "module" with a bezel, instrument-style header
+ * - Deep black background with green-glow accents
+ * - Space Mono for all data/values, Bebas Neue for zone labels
+ * - Zone panels have inner shadow for "recessed module" feel
+ */
+
+/* ── Root layout ─────────────────────────────────────────────────────────── */
+.cockpitV5 {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-sans);
+  position: relative;
+}
+
+/* ── Top instrument rail ─────────────────────────────────────────────────── */
+.cockpitRail {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 20px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  position: sticky; top: 0; z-index: 10;
+}
+.cockpitTitle {
+  font-family: var(--font-display);
+  font-size: 22px;
+  letter-spacing: 4px;
+  color: var(--green);
+  text-shadow: 0 0 20px var(--green-glow2);
+}
+.cockpitStatus {
+  display: flex; gap: 12px; align-items: center;
+}
+.statusDot {
+  width: 6px; height: 6px; border-radius: 50%;
+  background: var(--green);
+  box-shadow: 0 0 8px var(--green);
+  animation: pulse 2s ease infinite;
+}
+@keyframes pulse {
+  0%,100% { opacity: 1; box-shadow: 0 0 6px var(--green); }
+  50%      { opacity: 0.6; box-shadow: 0 0 14px var(--green); }
+}
+.statusText {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--text-muted);
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+}
+
+/* ── Main grid ───────────────────────────────────────────────────────────── */
+.gridContainer {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: 1fr 1fr;
+  gap: 2px;
+  flex: 1;
+  padding: 12px;
+  padding-bottom: 60px; /* PersonaLiveBar space */
+  background: var(--surface3); /* grid lines between zones */
+  min-height: calc(100vh - 110px);
+}
+
+/* ── Zone base ───────────────────────────────────────────────────────────── */
+.zone1, .zone2, .zone3, .zone4 {
+  display: flex;
+  flex-direction: column;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  overflow: hidden;
+  position: relative;
+}
+
+/* Subtle inner shadow for recessed instrument look */
+.zone1::before, .zone2::before, .zone3::before, .zone4::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  box-shadow: inset 0 2px 12px rgba(0,0,0,0.5);
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Active zone accent line — top border glow */
+.zone1 { border-top: 2px solid var(--green-dim); }
+.zone2 { border-top: 2px solid var(--magenta-dim); }
+.zone3 { border-top: 2px solid rgba(0,180,255,0.5); }
+.zone4 { border-top: 2px solid rgba(255,170,0,0.5); }
+
+/* ── Zone header ─────────────────────────────────────────────────────────── */
+.zoneHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 14px;
+  background: var(--surface2);
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+  z-index: 1;
+}
+.zoneLabel {
+  font-family: var(--font-display);
+  font-size: 13px;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+}
+.zone1 .zoneLabel { color: var(--green); }
+.zone2 .zoneLabel { color: var(--magenta); }
+.zone3 .zoneLabel { color: #00b4ff; }
+.zone4 .zoneLabel { color: var(--warning); }
+
+.zoneBadge {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 1px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  opacity: 0.6;
+}
+
+/* ── Zone body ───────────────────────────────────────────────────────────── */
+.zoneBody {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  z-index: 1;
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) transparent;
+}
+
+/* ── Zone 1: Journal ─────────────────────────────────────────────────────── */
+.emotionTags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.emotionTag {
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text-muted);
+  padding: 4px 10px;
+  font-size: 11px;
+  font-family: var(--font-mono);
+  cursor: pointer;
+  transition: all 0.15s;
+  letter-spacing: 0.5px;
+}
+.emotionTag:hover {
+  border-color: var(--green-dim);
+  color: var(--green);
+}
+.emotionTag.selected {
+  background: var(--green-deep);
+  border-color: var(--green);
+  color: var(--green);
+  box-shadow: 0 0 8px var(--green-glow);
+}
+
+.synthesizeBtn {
+  background: transparent;
+  border: 1px solid var(--green-dim);
+  color: var(--green);
+  padding: 8px 16px;
+  border-radius: var(--radius-sm);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: all 0.2s;
+  flex-shrink: 0;
+}
+.synthesizeBtn:hover:not(:disabled) {
+  background: var(--green-glow);
+  box-shadow: 0 0 16px var(--green-glow);
+}
+.synthesizeBtn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.error {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--error);
+  padding: 8px 10px;
+  background: rgba(255,51,85,0.08);
+  border: 1px solid rgba(255,51,85,0.3);
+  border-radius: var(--radius-sm);
+  flex-shrink: 0;
+}
+
+/* ── Zone 2: Hook Field ──────────────────────────────────────────────────── */
+/* (HookField component handles its own layout) */
+
+/* ── Zone 3: Identity Config ─────────────────────────────────────────────── */
+.slidersGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  flex-shrink: 0;
+}
+
+.radarContainer {
+  flex: 1;
+  min-height: 120px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+/* ── Zone 4: Visual Feedback ─────────────────────────────────────────────── */
+.chartsGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: 1fr 1fr;
+  gap: 8px;
+  flex: 1;
+  min-height: 0;
+}
+
+.chartCard {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 8px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+.chartCard:hover {
+  border-color: rgba(255,170,0,0.3);
+}
+
+/* ── Proceed bar ─────────────────────────────────────────────────────────── */
+.proceedBar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 20px;
+  background: var(--surface);
+  border-top: 1px solid var(--border);
+  position: sticky;
+  bottom: 60px; /* above PersonaLiveBar */
+  z-index: 9;
+}
+.proceedHint {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--text-muted);
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  opacity: 0.5;
+}
+.proceedBtn {
+  background: var(--green);
+  color: #000;
+  border: none;
+  border-radius: var(--radius-sm);
+  padding: 10px 28px;
+  font-family: var(--font-display);
+  font-size: 15px;
+  letter-spacing: 3px;
+  cursor: pointer;
+  transition: all 0.2s;
+  box-shadow: 0 0 20px var(--green-glow);
+}
+.proceedBtn:hover {
+  background: #00ffaa;
+  box-shadow: 0 0 36px rgba(0,255,136,0.4);
+  transform: translateY(-1px);
+}
+.proceedBtn:active {
+  transform: translateY(0);
+}
+
+/* ── Responsive ──────────────────────────────────────────────────────────── */
+@media (max-width: 1200px) {
+  .gridContainer {
+    grid-template-columns: 1fr;
+    grid-template-rows: repeat(4, auto);
+    min-height: unset;
+  }
+  .zone1, .zone2, .zone3, .zone4 {
+    min-height: 280px;
+  }
+  .chartsGrid {
+    grid-template-rows: auto auto;
+  }
+}
+@media (max-width: 700px) {
+  .cockpitRail { padding: 8px 12px; }
+  .gridContainer { padding: 8px; gap: 8px; }
+  .slidersGrid { grid-template-columns: 1fr 1fr; }
+  .chartsGrid { grid-template-columns: 1fr; }
+}
