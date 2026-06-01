@@ -36,3 +36,9 @@ ml-service/**/__pycache__/
 # Editor
 .vscode/
 .idea/
+
+# Agent handoff and memory docs — keep local, never push
+NEXT_AGENT_*.md
+*_HANDOFF*.md
+*_MEMORY*.md
+HABITAT_AGENT_BRIEF_LOCAL.md
