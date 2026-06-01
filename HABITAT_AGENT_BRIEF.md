@@ -4,7 +4,7 @@
 **To:** Research Agent  
 **Date:** May 2026  
 **Repo:** `jaguar999paw-droid/Habitat`  
-**Location on disk:** `/home/kamau/Habitat`
+**Location on disk:** `~/Habitat`
 
 ---
 
@@ -205,7 +205,7 @@ references, whatever you've got. This is the section I'm most interested in.]
 ## Build prompt for Claude
 [A single, dense, technically specific prompt that Claude can execute immediately.
 Reference actual file names, function names, endpoint names from the codebase above.
-Written as if speaking directly to Claude, who has live SSH access to dizaster and knows
+Written as if speaking directly to Claude, who has live SSH access to the host and knows
 the full codebase. Specific enough to start working without clarifying questions.]
 ```
 
@@ -214,7 +214,7 @@ the full codebase. Specific enough to start working without clarifying questions
 ## Technical Constraints
 
 - **Stack:** Node.js 20 (CommonJS only — no ESM), React/Vite, Python/Flask, CSS Modules
-- **Machine:** Ubuntu 24.04, username `kamau`, hostname `dizaster`
+- **Machine:** Ubuntu 24.04
 - **Persistence:** `~/.habitat-sessions/` flat file JSON — no database in Phase 1-2
 - **ML service optional** — all backend logic must degrade gracefully without it
 - **No breaking changes to `/api/analyze` contract**
@@ -223,5 +223,5 @@ the full codebase. Specific enough to start working without clarifying questions
 
 ---
 
-*Written by Claude from live inspection of `/home/kamau/Habitat`, May 2026.*  
+*Written by Claude from live inspection of `~/Habitat`, May 2026.*  
 *An honest accounting of what exists and a genuine invitation to think together about what should.*
